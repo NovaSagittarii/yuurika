@@ -1,0 +1,7 @@
+body {
+  margin: 100px;
+}
+.display {
+  border: 10px #888888 ridge;
+  align: center;
+}

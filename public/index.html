@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>yuurika~</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+    <script src="libs/p5.min.js"></script>
+  </head>
+  <body>
+    <h1> hello there! </h1>
+    <!--script>
+      var socket = io.connect('http://localhost:3000/');
+      window.addEventListener('keydown', (event) => {
+        const keyName = event.key;
+
+        socket.emit('keydown', event.keyCode);
+        console.log('keydown event [] key: ' + keyName);
+      });
+    </script-->
+    <div class=display>
+      <script src="render.js"></script>
+    </div>
+  </body>
+</html>

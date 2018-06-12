@@ -1,0 +1,10 @@
+{
+	"name": "yuurika",
+	"version": "0.0.1",
+	"description": "CodeCamp 2018 Entry",
+	"dependencies": {
+		"express": "^4.16.3",
+		"p5": "^0.6.1",
+		"socket.io": "^2.1.1"
+	}
+}
