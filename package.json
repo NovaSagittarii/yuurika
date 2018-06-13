@@ -1,6 +1,6 @@
 {
 	"name": "yuurika",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "CodeCamp 2018 Entry",
 	"dependencies": {
 		"express": "^4.16.3",
