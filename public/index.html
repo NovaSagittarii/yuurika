@@ -9,17 +9,8 @@
     <script src="libs/p5.min.js"></script>
   </head>
   <body>
-    <h1> hello there! </h1>
-    <!--script>
-      var socket = io.connect('http://localhost:3000/');
-      window.addEventListener('keydown', (event) => {
-        const keyName = event.key;
-
-        socket.emit('keydown', event.keyCode);
-        console.log('keydown event [] key: ' + keyName);
-      });
-    </script-->
-    <div class=display>
+    <div id=display>
+      <script src="process.js"></script>
       <script src="render.js"></script>
     </div>
   </body>
