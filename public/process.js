@@ -11,10 +11,12 @@ var yv = 0;
 var av = 0;
 var ap = 100;
 var sp = 100;
+var pw, sw;
 var pwr;
 var swr;
 var pwrof; //primary/secondary rate of fire
 var swrof;
+var name;
 var plyrs = [];
 var projectiles = [];
 
@@ -32,9 +34,12 @@ function update(data){
   yv = data.self.yv;
   av = data.self.av;
   ap -= (ap - data.self.ap) / 7;
-  sp -= (sp - data.self.sp) / 7;
+  sp -= (sp - data.self.sp) / 14;
+  pw = data.self.pw;
+  sw = data.self.sw;
   pwr = data.self.pwr;
   swr = data.self.swr;
+  name = data.self.name;
   state = data.self.state;
   plyrs = data.plyrs;
   projectiles = data.prjctls;
@@ -58,7 +63,7 @@ function setup() {
   socket = io.connect('http://47.147.17.164:3000');
   socket.on('update', update);
   socket.on('setConfig', updateConfig);
-  socket.emit('requestConfig', "");
+  socket.emit('requestConfig', name);
   for(var i = 0; i < sendable.length; i ++) keys[sendable[i]] = false;
 }
 function keyPressed() {

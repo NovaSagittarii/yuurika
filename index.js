@@ -6,37 +6,38 @@ const io = require('socket.io')(http);
 app.use(express.static(__dirname + '/public'));
 
 const config = {
-  width:  400,
-  height: 400,
+  width:  500,
+  height: 500,
   broadcastInterval: false, //ms
   targetFrameRate: 30, //fps
 };
-const PELLET = 0, TWIN = 1, GATLING = 2, SHOTGUN = 3;
-const MISSILE = 0;
+const PELLET = 0, TWIN = 1, GATLING = 2, SHOTGUN = 3, RAIL = 4;
+const MISSILE = 0, BURST = 1;
 const keys = "wasdjk".split('');
 const stats = {
   accel: 1,
   ts: Math.PI*0.003,
   wep: {
     pw: {
-      dmg: [15, 15, 8, 10],
-      muV: [8, 8, 12, 10],
+      dmg: [9, 9, 7, 6, 16],
+      muV: [18, 18, 24, 18, 40],
       // muzzle velocity
-      rec: [2, 3, 0.5, 5],
+      rec: [2, 3, 0.5, 0.4, 4],
       // recoil
-      kb: [2, 2, 1, 2],
+      kb: [2, 2, 1, 2, 4],
       // knockback
-      rof: [30, 14, 7, 55],
-      range: [600, 600, 400, 400],
-      pierce: [1, 1, 1, 2]
+      rof: [25, 12, 4, 85, 40],
+      range: [600, 600, 400, 300, 800],
+      pierce: [2, 2, 1, 1, 3]
     },
     sw: {
-      dmg: [40],
-      muV: [10],
-      rec: [10],
-      rof: [400],
-      range: [1400],
-      pierce: [1]
+      dmg: [64, 15],
+      muV: [12, 9],
+      rec: [10, 3],
+      kb: [14, 2],
+      rof: [200, 500],
+      range: [1000, 400],
+      pierce: [1, 1]
     },
   }
 };
@@ -56,11 +57,13 @@ function Projectile(uID, type, pID, angleOffset){
   this.a = plyr[uID].a + angleOffset;
   this.xv = Math.cos(this.a) * stats.wep[type].muV[pID] + plyr[uID].xv;
   this.yv = Math.sin(this.a) * stats.wep[type].muV[pID] + plyr[uID].yv;
+  this.kb = stats.wep[type].kb[pID];
   this.dmg = stats.wep[type].dmg[pID];
   this.pierce = stats.wep[type].pierce[pID];
   this.type = type;
   this.id = pID;
   this.d = stats.wep[type].range[pID];
+  this.v = stats.wep[type].muV[pID];
   this.plyr = uID;
   plyr[uID][type+"r"] = 0;
 }
@@ -68,7 +71,7 @@ Projectile.prototype.update = function(){
   this.x += this.xv;
   this.y += this.yv;
   this.d -= this.v;
-  return this.d < 0 || !this.pierce;
+  return (this.d < 0 || !this.pierce);
 };
 Projectile.prototype.returnData = function(){
   return {
@@ -76,7 +79,8 @@ Projectile.prototype.returnData = function(){
     y: this.y,
     a: this.a,
     type: this.type,
-    id: this.id
+    id: this.id,
+    d: this.d
   }
 };
 
@@ -98,7 +102,7 @@ function Player(){
   this.av = 0; // angular vel
   this.ap = 100; // armour
   this.sp = 100; // shield
-  this.pw = GATLING;
+  this.pw = SHOTGUN;
   this.sw = MISSILE;
   this.pwr = 0;
   this.swr = 0;
@@ -106,6 +110,7 @@ function Player(){
   this.pwtr = stats.wep.pw.rof[this.pw];
   this.swtr = stats.wep.sw.rof[this.sw];
   this.state = Object.assign(keySet);
+  this.name = "";
 }
 Player.prototype.update = function(socketid){
   if(this.state.w || this.state.s){
@@ -123,11 +128,24 @@ Player.prototype.update = function(socketid){
         fireBullets(socketid, 'pw', this.pw, 0.4, 1);
         break;
       case SHOTGUN:
-        fireBullets(socketid, 'pw', this.pw, 0.3, 3);
+        fireBullets(socketid, 'pw', this.pw, 0.6, 12);
       break;
+      case RAIL:
+        projectiles.push(new Projectile(socketid, 'pw', this.pw, 0));
+        break;
     }
   }
-  if(this.state.sw && this.swr > this.swtr) projectiles.push(new Projectile(socketid, 'sw', this.sw, 0));
+  if(this.state.sw && this.swr > this.swtr){
+    switch(this.sw){
+      case MISSILE:
+      case BURST:
+        projectiles.push(new Projectile(socketid, 'sw', this.sw, 0));
+        if(this.sw){
+          fireBullets(socketid, 'sw', this.sw, 0.4, 5);
+        }
+        break;
+    }
+  }
   if(--this.scd < 0) this.sp = Math.min(this.sp + 0.1, 100);
   this.x += this.xv;
   this.y += this.yv;
@@ -141,7 +159,7 @@ Player.prototype.update = function(socketid){
   if(this.y < 0) this.y = 0;
   if(this.x > config.width) this.x = config.width;
   if(this.y > config.height) this.y = config.height;
-  return this.ap < 0;
+  return this.ap < 1 || this.pierce < 1;
 };
 Player.prototype.updateState = function(input){
   if(isNaN(this.x) || isNaN(this.y) || isNaN(this.a)) return true; // I N V A L I D    M O V E M E N T   :hyperAngery:
@@ -158,10 +176,12 @@ Player.prototype.returnData = function(){
     av: this.av,
     ap: this.ap,
     sp: this.sp,
-    accel: this.state.w || this.state.s
+    accel: this.state.w || this.state.s,
+    name: this.name
   }
 };
 Player.prototype.damage = function(dmg){
+  if(!dmg) return;
   if(this.sp >= 1){
     this.scd = 150;
     this.sp = Math.max(0, this.sp - dmg);
@@ -179,7 +199,8 @@ function update(){
     let socketID = plyrID[i];
     let self = plyr[socketID];
     if(self.update(socketID)){
-      disconnect(socketID);
+      projectiles.push({type: "expl", c: 0, a: 2, x: self.x, y: self.y, returnData: Projectile.prototype.returnData, update: function(){ return this.c++;}});
+      respawnPlayer(socketID);
       continue;
     }
     // Checking from index of all tokenids, call from object and update.
@@ -202,10 +223,16 @@ function update(){
       if(self.plyr === plyrID[j]) continue;
       let that = plyr[plyrID[j]];
       //if(dist(self.x, self.y, that.x, that.y) < 9){
-      if(Math.abs(self.x - that.x) < 17 && Math.abs(self.y - that.y) < 17){
+      if(Math.abs(self.x - that.x) < 24 && Math.abs(self.y - that.y) < 24){
         that.damage(self.dmg);
-        //plyr[self.plyr].ap += self.dmg/3;
-        //plyr[self.plyr].sp += self.dmg/5;
+        let s = Object.assign(self);
+        if(s.kb){
+          that.xv += s.kb * Math.cos(s.a);
+          that.yv += s.kb * Math.sin(s.a);
+        }
+        if(self.type === "sw" && self.id < 2){
+          projectiles.push({type: "expl", c: 0, a: 1, x: s.x, y: s.y, returnData: Projectile.prototype.returnData, update: function(){ return this.c++;}});
+        }
         if(!(--self.pierce)) break;
       }
     }
@@ -214,6 +241,12 @@ function update(){
 }
 function broadcastData(){
   broadcast = true;
+}
+function respawnPlayer(socketid){
+  let name = plyr[socketid].name;
+  plyr[socketid] = new Player();
+  plyr[socketid].name = name;
+  console.log('->     respawned! cID: ' + socketid);
 }
 function disconnect(socketid){
   delete plyr[socketid];
@@ -237,7 +270,8 @@ io.on('connection', function(socket){
       plyrID.push(socket.id);
     }
   });
-  socket.on('requestConfig', function(){
+  socket.on('requestConfig', function(name){
+    plyr[socket.id].name = name;
     io.to(socket.id).emit('setConfig', config);
   });
   socket.on('disconnect', function(){
