@@ -64,6 +64,7 @@ function setup() {
   strokeCap(PROJECT);
   //socket = io.connect('https://47.147.17.164:3000', {secure: true});
   //socket = io.connect('http://47.147.17.164:3000');
+  socket = io.connect('http://myapp.herokuapp.com/');
   socket.on('update', update);
   socket.on('setConfig', updateConfig);
   socket.emit('requestConfig', name);
