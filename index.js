@@ -1,9 +1,25 @@
 const express = require('express');
 const app = express();
-const http = require('http').Server(app);
-const io = require('socket.io')(http);
+const http = require('http');
+const https = require('https');
+const fs = require('fs');
+const privateKey  = fs.readFileSync('./sslcert/private.key', 'utf8');
+const certificate = fs.readFileSync('./sslcert/certificate.crt', 'utf8');
+const caBundle = fs.readFileSync('./sslcert/ca_bundle.crt');
 
-app.use(express.static(__dirname + '/public'));
+const credentials = {key: privateKey, cert: certificate, ca: caBundle};
+
+app.use(express.static('./public'));
+
+app.use((req, res) => {
+  res.writeHead(200);
+  res.end("hello world\n");
+});
+
+const server = http.createServer(app);
+//const server = https.createServer(credentials, app);
+
+const io = require('socket.io')(server);
 
 const config = {
   width:  500,
@@ -73,7 +89,7 @@ Projectile.prototype.update = function(){
   this.d -= this.v;
   return (this.d < 0 || !this.pierce);
 };
-Projectile.prototype.returnData = function(){
+Projectile.prototype.returnData = function(){server
   return {
     x: this.x,
     y: this.y,
@@ -279,7 +295,7 @@ io.on('connection', function(socket){
   });
 });
 
-http.listen(3000, '0.0.0.0', function(){
+server.listen(3000/*, '0.0.0.0'*/, function(){
   console.log(`listening on *:3000\nRunning at ${(1e3/Math.round(1e3 / config.targetFrameRate)).toFixed(2)}FPS`);
 });
 setInterval(update, Math.round(1e3 / config.targetFrameRate));

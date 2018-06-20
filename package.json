@@ -2,9 +2,17 @@
 	"name": "yuurika",
 	"version": "0.0.2",
 	"description": "CodeCamp 2018 Entry",
+	"author": {
+		"name": "Thomas Li"
+	},
 	"dependencies": {
 		"express": "^4.16.3",
+		"fs": "0.0.1-security",
+		"https": "^1.0.0",
 		"p5": "^0.6.1",
 		"socket.io": "^2.1.1"
+	},
+	"scripts": {
+	  "start": "node index.js"
 	}
 }

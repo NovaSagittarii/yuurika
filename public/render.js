@@ -33,7 +33,7 @@ Particle.prototype.process = function(){
   }
   pop();
   this.d -= pDecay[this.t];
-  return this.d < 0;
+  return this.d < 0; // returns true if to be removed
 }
 
 function draw() {
@@ -47,19 +47,18 @@ function draw() {
   text(`${~~frameRate()}FPS\n ${~~config.targetFrameRate}`, 30, 20);
   text(plyrs.length+1 + " active users\n\nWASD - movement\nJ - primary weapon\nK - secondary weapon", width/2, 50);
 
+  //transformations to center player to center of screen and lock viewing orientation to face upwards
   translate(~~(width/2), ~~(height/2));
   rotate(3/2*Math.PI - a + av);
   translate(-x, -y);
 
   for(let i = 0; i < particles.length; i ++){
-    if(particles[i].process()){
-      particles.splice(i, 1);
-    }
+    if(particles[i].process()) particles.splice(i, 1);
   }
 
   fill(255, 150, 150);
 
-  strokeCap(ROUND);
+  // renders all players
   for(let i = 0; i < plyrs.length; i ++){
     let plyr = plyrs[i];
     push();
@@ -80,6 +79,8 @@ function draw() {
     if(plyr.accel) particles.push(new Particle(plyr.x - Math.cos(plyr.a)*15, plyr.y - Math.sin(plyr.a)*15, Math.random()*Math.PI*2, plyr.a + Math.random()*0.5-0.25, -3, 0, EXHAUST));
   }
   noStroke();
+
+  //render projectiles
   for(let i = 0; i < projectiles.length; i ++){
     let obj = projectiles[i];
     push();
@@ -125,6 +126,7 @@ function draw() {
   noFill();
   rect(config.width/2, config.height/2, config.width, config.height);
 
+  // render player
   translate(x, y);
   rotate(a);
 

@@ -4,21 +4,17 @@
     <title>yuurika~</title>
     <meta charset="utf-8">
     <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
     <script src="libs/p5.min.js"></script>
   </head>
   <body id=canvas>
     <script>
       var name = prompt("enter name");
-      function overwrite(){
-        document.getElementById('canvas').innerHTML = '|div id=display>|script src="process.js">|/script>|script src="render.js">|/script> |/div>'.replace(/\|/g, "<");
-        document.location.reload(false);
-      }
     </script>
     <div id=display>
       <script src="process.js"></script>
       <script src="render.js"></script>
     </div>
-    <!--button onclick='overwrite()'> init </button-->
   </body>
 </html>

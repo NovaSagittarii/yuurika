@@ -26,6 +26,7 @@ var state;
 
 var keys = [];
 
+// updates current data to sync client with server
 function update(data){
   x = data.self.x;
   y = data.self.y;
@@ -54,18 +55,22 @@ function updateConfig(newConfig){
   frameRate(config.targetFrameRate);
 }
 
+//initialize
 function setup() {
   createCanvas(windowWidth, windowHeight);
   noCursor();
   rectMode(CENTER);
   textAlign(CENTER, CENTER);
   strokeCap(PROJECT);
+  //socket = io.connect('https://47.147.17.164:3000', {secure: true});
   socket = io.connect('http://47.147.17.164:3000');
   socket.on('update', update);
   socket.on('setConfig', updateConfig);
   socket.emit('requestConfig', name);
   for(var i = 0; i < sendable.length; i ++) keys[sendable[i]] = false;
 }
+
+//update current state by sending data to server to sync server with client
 function keyPressed() {
   keys[key.toLowerCase()] = true;
   let data = currKey = {
