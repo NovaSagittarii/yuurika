@@ -3,11 +3,11 @@ const app = express();
 const http = require('http');
 const https = require('https');
 const fs = require('fs');
-const privateKey  = fs.readFileSync('./sslcert/private.key', 'utf8');
-const certificate = fs.readFileSync('./sslcert/certificate.crt', 'utf8');
-const caBundle = fs.readFileSync('./sslcert/ca_bundle.crt');
+//const privateKey  = fs.readFileSync('./sslcert/private.key', 'utf8');
+//const certificate = fs.readFileSync('./sslcert/certificate.crt', 'utf8');
+//const caBundle = fs.readFileSync('./sslcert/ca_bundle.crt');
 
-const credentials = {key: privateKey, cert: certificate, ca: caBundle};
+//const credentials = {key: privateKey, cert: certificate, ca: caBundle};
 
 app.use(express.static('./public'));
 
