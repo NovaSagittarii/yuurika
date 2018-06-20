@@ -1,13 +1,7 @@
 const express = require('express');
 const app = express();
 const http = require('http');
-const https = require('https');
 const fs = require('fs');
-//const privateKey  = fs.readFileSync('./sslcert/private.key', 'utf8');
-//const certificate = fs.readFileSync('./sslcert/certificate.crt', 'utf8');
-//const caBundle = fs.readFileSync('./sslcert/ca_bundle.crt');
-
-//const credentials = {key: privateKey, cert: certificate, ca: caBundle};
 
 app.use(express.static('./public'));
 
@@ -17,7 +11,6 @@ app.use((req, res) => {
 });
 
 const server = http.createServer(app);
-//const server = https.createServer(credentials, app);
 
 const io = require('socket.io')(server);
 
