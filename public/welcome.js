@@ -1,4 +1,7 @@
+var joined = false;
 function start(){
+  if(joined) return;
+  joined = true;
   joinGame(document.getElementById('input').value);
   document.getElementById('welcome').style.display = "none";
   document.getElementById('display').style.display = "block";
@@ -6,5 +9,4 @@ function start(){
 document.addEventListener('keydown', (event) => {
   const keyName = event.key;
   if(keyName === 'Enter') start();
-  start = joinGame = null;
 });
