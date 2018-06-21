@@ -288,7 +288,7 @@ io.on('connection', function(socket){
 
   socket.on('input', function(data){
     if(IPs[address] !== socket.id){
-      io.sockets.connected[IPs[address]].disconnect();
+      disconnect(IPs[address]);
       IPs[address] = socket.id;
       console.log(' < disconnected IP ' + address + ' cID: ' + socket.id);
       return;
