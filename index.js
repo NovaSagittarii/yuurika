@@ -10,8 +10,8 @@ const server = http.createServer(app);
 const io = require('socket.io')(server);
 
 const config = {
-  width:  1000,
-  height: 1000,
+  width:  1200,
+  height: 1200,
   broadcastInterval: false, //ms
   targetFrameRate: 36, //fps
 };
@@ -103,8 +103,8 @@ function fireBullets(uID, type, pID, angleOffset, repeat){
 }
 
 function Player(){
-  this.x = plyrID.length*50;
-  this.y = 0;
+  this.x = Math.random()*config.width;
+  this.y = Math.random()*config.height;
   this.a = 0;  // rotation alignment
   this.xv = 0;
   this.yv = 0;
