@@ -274,7 +274,8 @@ io.on('connection', function(socket){
   if(IPs[address]){
     socket.disconnect();
     io.sockets.connected[IPs[address]].disconnect()
-    console.log(' < disconnection! - ' + address + ' cID: ' + socket.id);
+    console.log(' < disconnected IP ' + address + ' cID: ' + socket.id);
+    delete IPs[address];
     return;
   }else{
     IPs[address] = socket.id;
@@ -301,7 +302,7 @@ io.on('connection', function(socket){
     io.to(socket.id).emit('setConfig', config);
   });
   socket.on('disconnect', function(){
-    delete IPs[socket.request.connection.remoteAddress]
+    delete IPs[socket.request.connection.remoteAddress];
     disconnect(socket.id);
   });
 });
