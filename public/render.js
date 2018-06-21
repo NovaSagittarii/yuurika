@@ -86,11 +86,8 @@ function draw() {
     if(plyr.accel) particles.push(new Particle(plyr.x - Math.cos(plyr.a)*15, plyr.y - Math.sin(plyr.a)*15, Math.random()*Math.PI*2, plyr.a + Math.random()*0.5-0.25, -3, 0, EXHAUST));
     toSort.push({val: plyr.kills, name: plyr.name});
   }
-  toSort.push({val: kills, name: name});
+  toSort.push({val: kills, name: name}); // add player to leaderboard
   toSort.sort(compare).reverse(); // sort leaderboard
-  for(let i = 0; i < Math.min(toSort.length, 5); i ++){
-    text(`#${i+1} - ${toSort[i].name} - ${toSort[i].val} kills`, width-200, 100+i*15);
-  }
   
   noStroke();
 
@@ -184,7 +181,13 @@ function draw() {
 
   fill(255, 255, 255, 200);
   text(kills + " kills", 55, height-100);
-
+  
+  // render leaderboard
+  textSize(14);
+  for(let i = 0; i < Math.min(toSort.length, 5); i ++){
+    text(`#${i+1} - ${toSort[i].name} - ${toSort[i].val} kills`, width-200, 100+i*15);
+  }
+  
   fill(255, 255, 255, 50);
   ellipse(width-120, height-50, 50, 50);
   ellipse(width-50, height-50, 50, 50);
