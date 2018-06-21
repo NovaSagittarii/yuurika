@@ -43,9 +43,9 @@ function draw() {
   fill(255, 255, 255);
   //rect(0, 0, 700, 50);
   //fill(0, 0, 0);
-  textSize(12);
-  text(`${~~frameRate()}FPS\n ${~~config.targetFrameRate}`, 30, 20);
-  text(plyrs.length+1 + " active users\n\nWASD - movement\nJ - primary weapon\nK - secondary weapon", width/2, 50);
+  textSize(24);
+  text(`${~~frameRate()}FPS\n ${~~config.targetFrameRate}`, 60, 40);
+  text(plyrs.length+1 + " active users", width/2, 150);
 
   //transformations to center player to center of screen and lock viewing orientation to face upwards
   translate(~~(width/2), ~~(height/2));
@@ -59,6 +59,7 @@ function draw() {
   fill(255, 150, 150);
 
   // renders all players
+  textSize(12);
   for(let i = 0; i < plyrs.length; i ++){
     let plyr = plyrs[i];
     push();
@@ -123,9 +124,8 @@ function draw() {
   }
 
   stroke(255, 255, 255, 20);
-  noFill();
+  noFill(); // draw bounding box
   rect(config.width/2, config.height/2, config.width, config.height);
-
   // render player
   translate(x, y);
   rotate(a);
@@ -153,8 +153,10 @@ function draw() {
 
   //---- GUI ----
   strokeCap(PROJECT);
+  textSize(14);
   fill(255);
   text(name, width/2, height/2+20);
+  textSize(18);
   fill(255, 255, 255, 50);
   rect(185, height-50, 300, 30, 5);
   fill(255, 0, 0, 100);
@@ -164,10 +166,14 @@ function draw() {
   rect(40+145*sp/100, height-50, 290*sp/100, 20, 5);
   text(Math.round(sp) + "SP", 315, height-75);
 
+  fill(255, 255, 255, 200);
+  text(kills + " kills", 55, height-100);
+
   fill(255, 255, 255, 50);
   ellipse(width-120, height-50, 50, 50);
   ellipse(width-50, height-50, 50, 50);
 
+  textSize(12);
   text("PELLET TWIN GATLING SHOTGUN RAIL".split(' ')[pw], width-120, height-50);
   text("MISSILE BURST".split(' ')[sw], width-50, height-50);
   textSize(18);

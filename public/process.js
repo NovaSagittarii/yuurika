@@ -1,5 +1,6 @@
 var config = {};
 var socket;
+var font;
 const sendable = "wasdjk".split('');
 
 //Player vars
@@ -14,6 +15,7 @@ var sp = 100;
 var pw, sw;
 var pwr;
 var swr;
+var kills;
 var pwrof; //primary/secondary rate of fire
 var swrof;
 var name;
@@ -41,13 +43,12 @@ function update(data){
   pwr = data.self.pwr;
   swr = data.self.swr;
   name = data.self.name;
+  kills = data.self.kills;
   state = data.self.state;
   plyrs = data.plyrs;
   projectiles = data.prjctls;
-  if(!pwrof){
-    pwrof = data.self.pwtr;
-    swrof = data.self.swtr;
-  }
+  pwrof = data.self.pwtr;
+  swrof = data.self.swtr;
   console.log("updated! to " + state)
 }
 function updateConfig(newConfig){
@@ -56,19 +57,28 @@ function updateConfig(newConfig){
 }
 
 //initialize
+function preload() {
+  font = loadFont('assets/Share-Regular.ttf');
+}
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  var canvas = createCanvas(windowWidth, windowHeight);
+  canvas.parent('display');
   noCursor();
   rectMode(CENTER);
   textAlign(CENTER, CENTER);
+  textFont(font);
   strokeCap(PROJECT);
-  //socket = io.connect('https://47.147.17.164:3000', {secure: true});
-  socket = io.connect('http://47.147.17.164:3000');
-  //socket = io.connect('http://myapp.herokuapp.com/');
+  /*socket = io.connect('http://47.147.17.164:3000');
+  socket.on('update', update);
+  socket.on('setConfig', updateConfig);
+  socket.emit('requestConfig', name);*/
+  for(var i = 0; i < sendable.length; i ++) keys[sendable[i]] = false;
+}
+function joinGame(name) {
+  socket = io();
   socket.on('update', update);
   socket.on('setConfig', updateConfig);
   socket.emit('requestConfig', name);
-  for(var i = 0; i < sendable.length; i ++) keys[sendable[i]] = false;
 }
 
 //update current state by sending data to server to sync server with client

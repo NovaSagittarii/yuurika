@@ -1,4 +1,42 @@
 body {
   margin: 0px;
   overflow: hidden;
+  font-family: 'Share', cursive;
+  background-color: black;
+}
+
+#welcome {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Share', cursive;
+}
+#input {
+  height: 24px;
+  resize: none;
+  overflow: hidden;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 24px;
+  font-family: 'Share', cursive;
+}
+
+.button {
+    background-color: #444444;
+    border: none;
+    color: white;
+    padding: 6px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+}
+.pad {
+  padding: 100px;
+}
+
+div {
+  color: white;
+  text-align: center;
 }

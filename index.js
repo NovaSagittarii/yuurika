@@ -2,23 +2,18 @@ const express = require('express');
 const app = express();
 const http = require('http');
 const fs = require('fs');
+const defaultNames = "git push origin master disconnect app socket req res https while(true) jeff jason fs express coffee bin socket.io 48fps".split(' ');
 
 app.use(express.static('./public'));
 
-app.use((req, res) => {
-  res.writeHead(200);
-  res.end("hello world\n");
-});
-
 const server = http.createServer(app);
-
 const io = require('socket.io')(server);
 
 const config = {
-  width:  500,
-  height: 500,
+  width:  1000,
+  height: 1000,
   broadcastInterval: false, //ms
-  targetFrameRate: 30, //fps
+  targetFrameRate: 48, //fps
 };
 const PELLET = 0, TWIN = 1, GATLING = 2, SHOTGUN = 3, RAIL = 4;
 const MISSILE = 0, BURST = 1;
@@ -28,12 +23,12 @@ const stats = {
   ts: Math.PI*0.003,
   wep: {
     pw: {
-      dmg: [9, 9, 7, 6, 16],
+      dmg: [12, 14, 7, 6, 16],
       muV: [18, 18, 24, 18, 40],
       // muzzle velocity
       rec: [2, 3, 0.5, 0.4, 4],
       // recoil
-      kb: [2, 2, 1, 2, 4],
+      kb: [4, 4, 1, 2, 4],
       // knockback
       rof: [25, 12, 4, 85, 40],
       range: [600, 600, 400, 300, 800],
@@ -59,6 +54,7 @@ var active = 0;
 var plyr = {};
 var plyrID = [];
 var projectiles = [];
+var IPs = {};
 
 function Projectile(uID, type, pID, angleOffset){
   this.x = plyr[uID].x;
@@ -111,14 +107,17 @@ function Player(){
   this.av = 0; // angular vel
   this.ap = 100; // armour
   this.sp = 100; // shield
-  this.pw = SHOTGUN;
-  this.sw = MISSILE;
+  this.pw = ~~(Math.random() * 5);
+  this.sw = BURST;
   this.pwr = 0;
   this.swr = 0;
   this.scd = 0;
   this.pwtr = stats.wep.pw.rof[this.pw];
   this.swtr = stats.wep.sw.rof[this.sw];
   this.state = Object.assign(keySet);
+  this.kills = 0;
+  this.score = 0;
+  this.dead = false;
   this.name = "";
 }
 Player.prototype.update = function(socketid){
@@ -186,7 +185,8 @@ Player.prototype.returnData = function(){
     ap: this.ap,
     sp: this.sp,
     accel: this.state.w || this.state.s,
-    name: this.name
+    name: this.name,
+    kills: this.kills
   }
 };
 Player.prototype.damage = function(dmg){
@@ -197,7 +197,10 @@ Player.prototype.damage = function(dmg){
   }else{
     this.scd = 1000;
     this.ap -= dmg;
+    if(this.dead === null) this.dead = true;
+    if(this.ap < 1 && this.dead === false) this.dead = null;
   }
+  return this.ap < 1 && !this.dead;
 };
 
 var broadcast = true;
@@ -233,7 +236,7 @@ function update(){
       let that = plyr[plyrID[j]];
       //if(dist(self.x, self.y, that.x, that.y) < 9){
       if(Math.abs(self.x - that.x) < 24 && Math.abs(self.y - that.y) < 24){
-        that.damage(self.dmg);
+        if(that.damage(self.dmg)) plyr[self.plyr].kills ++;
         let s = Object.assign(self);
         if(s.kb){
           that.xv += s.kb * Math.cos(s.a);
@@ -258,15 +261,24 @@ function respawnPlayer(socketid){
   console.log('->     respawned! cID: ' + socketid);
 }
 function disconnect(socketid){
-  delete plyr[socketid];
-  plyrID.splice(plyrID.indexOf(socketid), 1);
-  console.log(' < disconnection!  cID: ' + socketid);
+  setTimeout(function(){
+    delete plyr[socketid];
+    plyrID.splice(plyrID.indexOf(socketid), 1);
+    console.log(' < disconnection!  cID: ' + socketid);
+  }, 10000);
 }
 
 io.on('connection', function(socket){
-  console.log(' > new connection! cID: ' + socket.id);
-  plyr[socket.id] = new Player();
-  plyrID.push(socket.id);
+  var address = socket.handshake.address;
+  console.log(' > new connection < ' + address + ' cID: ' + socket.id);
+  if(IPs[address]){
+    socket.disconnect();
+    io.sockets.connected[IPs[address]].disconnect()
+    console.log(' < disconnection! - ' + address + ' cID: ' + socket.id);
+    return;
+  }else{
+    IPs[address] = socket.id;
+  }
 
   socket.on('input', function(data){
     if(plyr[socket.id]){
@@ -280,15 +292,20 @@ io.on('connection', function(socket){
     }
   });
   socket.on('requestConfig', function(name){
-    plyr[socket.id].name = name;
+    console.log(`=> player [ ${name} ] joined! - cID: ${socket.id}`);
+    if(!name || name === "") name = defaultNames[plyrID.length % defaultNames.length];
+    plyrID.push(socket.id);
+    plyr[socket.id] = new Player();
+    plyr[socket.id].name = name.substr(0, 16);
     io.to(socket.id).emit('setConfig', config);
   });
   socket.on('disconnect', function(){
+    delete IPs[socket.request.connection.remoteAddress]
     disconnect(socket.id);
   });
 });
 
-server.listen(process.env.PORT || 3000, function(){
+server.listen(process.env.PORT || 3000, '0.0.0.0', function(){
   console.log("Express server listening on port %d in %s mode", this.address().port, app.settings.env);
   console.log(`Running at ${(1e3/Math.round(1e3 / config.targetFrameRate)).toFixed(2)}FPS`);
 });
