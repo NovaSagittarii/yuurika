@@ -5,6 +5,10 @@ body {
   background-color: black;
 }
 
+#title {
+  background-image: url('/assets/bkgd.jpg');
+  background-repeat: no-repeat;
+}
 #welcome {
   position: absolute;
   top: 50%;
