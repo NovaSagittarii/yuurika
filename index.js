@@ -13,7 +13,7 @@ const config = {
   width:  1000,
   height: 1000,
   broadcastInterval: false, //ms
-  targetFrameRate: 48, //fps
+  targetFrameRate: 36, //fps
 };
 const PELLET = 0, TWIN = 1, GATLING = 2, SHOTGUN = 3, RAIL = 4;
 const MISSILE = 0, BURST = 1;
@@ -293,6 +293,7 @@ io.on('connection', function(socket){
   });
   socket.on('requestConfig', function(name){
     console.log(`=> player [ ${name} ] joined! - cID: ${socket.id}`);
+    name.replace(/\n/g, "");
     if(!name || name === "") name = defaultNames[plyrID.length % defaultNames.length];
     plyrID.push(socket.id);
     plyr[socket.id] = new Player();

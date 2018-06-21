@@ -3,3 +3,7 @@ function start(){
   document.getElementById('welcome').style.display = "none";
   document.getElementById('display').style.display = "block";
 }
+document.addEventListener('keydown', (event) => {
+  const keyName = event.key;
+  if(keyName === 'Enter') start();
+});
