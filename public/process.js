@@ -22,6 +22,11 @@ var name;
 var plyrs = [];
 var projectiles = [];
 
+var clipsize;
+var ammo = 0;
+var reloadtime;
+var reload;
+
 var accel = 1;
 var ts = Math.PI * 0.003;
 var state;
@@ -30,25 +35,31 @@ var keys = [];
 
 // updates current data to sync client with server
 function update(data){
-  x = data.self.x;
-  y = data.self.y;
-  a = data.self.a;
-  xv = data.self.xv;
-  yv = data.self.yv;
-  av = data.self.av;
-  ap -= (ap - data.self.ap) / 7;
-  sp -= (sp - data.self.sp) / 14;
-  pw = data.self.pw;
-  sw = data.self.sw;
-  pwr = data.self.pwr;
-  swr = data.self.swr;
-  name = data.self.name;
-  kills = data.self.kills;
-  state = data.self.state;
+  const SELF = data.self;
+  x = SELF.x;
+  y = SELF.y;
+  a = SELF.a;
+  xv = SELF.xv;
+  yv = SELF.yv;
+  av = SELF.av;
+  ap -= (ap - SELF.ap) / 7;
+  sp -= (sp - SELF.sp) / 14;
+  pw = SELF.pw;
+  sw = SELF.sw;
+  pwr = SELF.pwr;
+  swr = SELF.swr;
+  name = SELF.name;
+  kills = SELF.kills;
+  state = SELF.state;
   plyrs = data.plyrs;
   projectiles = data.prjctls;
-  pwrof = data.self.pwtr;
-  swrof = data.self.swtr;
+  pwrof = SELF.pwtr;
+  swrof = SELF.swtr;
+  clipsize = SELF.pwcs;
+  ammo -= (ammo - SELF.pwam) / 5;
+  reloadtime = SELF.pwrlt;
+  reload = SELF.pwrltcd;
+
   console.log("updated! to " + state)
 }
 function updateConfig(newConfig){

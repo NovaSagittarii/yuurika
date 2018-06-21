@@ -23,21 +23,25 @@ const stats = {
   ts: Math.PI*0.003,
   wep: {
     pw: {
-      dmg: [12, 14, 7, 6, 16],
-      muV: [18, 18, 24, 18, 40],
+      dmg: [12, 10, 8, 6, 18],
+      muV: [18, 18, 24, 18, 42],
       // muzzle velocity
-      rec: [2, 3, 0.5, 0.4, 4],
+      rec: [2, 4, 0.7, 8, 5],
       // recoil
-      kb: [4, 4, 1, 2, 4],
+      kb: [4, 3, 1, 2, 4],
       // knockback
-      rof: [25, 12, 4, 85, 40],
-      range: [600, 600, 400, 300, 800],
-      pierce: [2, 2, 1, 1, 3]
+      rof: [22, 10, 3, 65, 40],
+      cs: [8, 14, 42, 5, 3],
+      //clip size
+      rlt: [120, 350, 300, 250, 250],
+      //reload time
+      range: [600, 280, 400, 300, 800],
+      pierce: [2, 2, 1, 1, 5]
     },
     sw: {
-      dmg: [64, 15],
+      dmg: [64, 18],
       muV: [12, 9],
-      rec: [10, 3],
+      rec: [10, 14],
       kb: [14, 2],
       rof: [200, 500],
       range: [1000, 400],
@@ -114,6 +118,10 @@ function Player(){
   this.scd = 0;
   this.pwtr = stats.wep.pw.rof[this.pw];
   this.swtr = stats.wep.sw.rof[this.sw];
+  this.pwcs = stats.wep.pw.cs[this.pw];
+  this.pwam = this.pwcs; // full clip
+  this.pwrlt = stats.wep.pw.rlt[this.pw];
+  this.pwrltcd = 0;
   this.state = Object.assign(keySet);
   this.kills = 0;
   this.score = 0;
@@ -126,11 +134,12 @@ Player.prototype.update = function(socketid){
     this.yv += Math.sin(this.a) * stats.accel * (1-1.2*this.state.s);
   }
   if(this.state.a || this.state.d) this.av += stats.ts * (1-2*this.state.a);
-  if(this.state.pw && this.pwr > this.pwtr){
+  if(this.state.pw && this.pwr > this.pwtr && this.pwam > 0){
+    this.pwam --;
     switch(this.pw){
       case PELLET:
       case TWIN:
-        projectiles.push(new Projectile(socketid, 'pw', this.pw, 0));
+        fireBullets(socketid, 'pw', this.pw, 0, 1);
         break;
       case GATLING:
         fireBullets(socketid, 'pw', this.pw, 0.4, 1);
@@ -139,18 +148,21 @@ Player.prototype.update = function(socketid){
         fireBullets(socketid, 'pw', this.pw, 0.6, 12);
       break;
       case RAIL:
-        projectiles.push(new Projectile(socketid, 'pw', this.pw, 0));
+        fireBullets(socketid, 'pw', this.pw, 0, 1);
         break;
+    }
+  }
+  if(this.pwam < 1){
+    if(this.pwrltcd++ > this.pwrlt){
+      this.pwam = this.pwcs;
+      this.pwrltcd = 0;
     }
   }
   if(this.state.sw && this.swr > this.swtr){
     switch(this.sw){
       case MISSILE:
       case BURST:
-        projectiles.push(new Projectile(socketid, 'sw', this.sw, 0));
-        if(this.sw){
-          fireBullets(socketid, 'sw', this.sw, 0.4, 5);
-        }
+        fireBullets(socketid, 'sw', this.sw, 0.4, !this.sw + 5);
         break;
     }
   }
@@ -271,17 +283,15 @@ function disconnect(socketid){
 io.on('connection', function(socket){
   var address = socket.handshake.address;
   console.log(' > new connection < ' + address + ' cID: ' + socket.id);
-  if(IPs[address]){
-    socket.disconnect();
-    io.sockets.connected[IPs[address]].disconnect()
-    console.log(' < disconnected IP ' + address + ' cID: ' + socket.id);
-    delete IPs[address];
-    return;
-  }else{
-    IPs[address] = socket.id;
-  }
+  if(!IPs[address]) IPs[address] = socket.id;
 
   socket.on('input', function(data){
+    if(IPs[address] !== socket.id){
+      io.sockets.connected[IPs[address]].disconnect();
+      IPs[address] = socket.id;
+      console.log(' < disconnected IP ' + address + ' cID: ' + socket.id);
+      return;
+    }
     if(plyr[socket.id]){
       if(plyr[socket.id].updateState(data)){
         console.log("DISCONNECTED!!!")

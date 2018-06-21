@@ -173,17 +173,29 @@ function draw() {
   ellipse(width-120, height-50, 50, 50);
   ellipse(width-50, height-50, 50, 50);
 
+  fill(255, 255, 255, 125);
   textSize(12);
-  text("PELLET TWIN GATLING SHOTGUN RAIL".split(' ')[pw], width-120, height-50);
+  text("PELLET TWIN GATLING SHOTGUN RAIL".split(' ')[pw] + `\n${Math.round(ammo)} / ${clipsize}`, width-120, height-50);
   text("MISSILE BURST".split(' ')[sw], width-50, height-50);
   textSize(18);
   text("J", width-95, height-25);
   text("K", width-25, height-25);
   strokeWeight(4);
   noFill();
+  stroke(255, 255, 220, 100);
+  arc(width-120, height-50, 54, 54, 0, Math.PI*2*constrain(ammo/clipsize, 0, 1));
   stroke(255, 255, 255, 100)
-  arc(width-120, height-50, 50, 50, 0, Math.PI*2*constrain(pwr/pwrof, 0, 1));
+  arc(width-120, height-50, 46, 46, 0, Math.PI*2*constrain(pwr/pwrof, 0, 1));
   arc(width-50, height-50, 50, 50, 0, Math.PI*2*constrain(swr/swrof, 0, 1));
+  if(this.reload){
+    arc(width/2, height/2, 150, 150, 0, Math.PI*2*constrain(reload/reloadtime, 0, 1));
+    strokeWeight(6);
+    stroke(255, 255, 255, 40)
+    arc(width/2, height/2, 150, 150, 0, Math.PI*2);
+    noStroke();
+    fill(255, 255, 255, 150);
+    text("Reloading primary weapon...", width/2, height/2 + 100);
+  }
   strokeWeight(1);
 }
 function windowResized() {
