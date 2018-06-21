@@ -28,15 +28,16 @@ const stats = {
       // muzzle velocity
       rec: [2, 4, 0.7, 8, 5, 1],
       // recoil
-      kb: [4, 3, 1, 2, 4, 1],
+      kb: [5, 3, 1, 2, 4, 1],
       // knockback
       rof: [22, 12, 3, 65, 40, 5],
-      cs: [8, 14, 42, 5, 3, 20],
+      cs: [10, 14, 42, 3, 5, 25],
       //clip size
       rlt: [120, 350, 300, 250, 160, 450],
       //reload time
       range: [600, 480, 550, 300, 1200, 550],
-      pierce: [2, 2, 1, 1, 5, 1]
+      pierce: [2, 2, 1, 1, 5, 1],
+      hbs: [28, 24, 18, 16, 26, 24]
     },
     sw: {
       dmg: [64, 18],
@@ -45,7 +46,8 @@ const stats = {
       kb: [14, 2],
       rof: [200, 500],
       range: [1000, 400],
-      pierce: [1, 1]
+      pierce: [1, 1],
+      hbs: [24, 18],
     },
   }
 };
@@ -75,6 +77,7 @@ function Projectile(uID, type, pID, angleOffset){
   this.v = stats.wep[type].muV[pID];
   this.plyr = uID;
   plyr[uID][type+"r"] = 0;
+  this.hbs = stats.wep[type].hbs[pID];
 }
 Projectile.prototype.update = function(){
   this.x += this.xv;
@@ -248,7 +251,7 @@ function update(){
       if(self.plyr === plyrID[j]) continue;
       let that = plyr[plyrID[j]];
       //if(dist(self.x, self.y, that.x, that.y) < 9){
-      if(Math.abs(self.x - that.x) < 24 && Math.abs(self.y - that.y) < 24){
+      if(Math.abs(self.x - that.x) < 24 && Math.abs(self.y - that.y) < self.hbs){
         if(that.damage(self.dmg)) plyr[self.plyr].kills ++;
         let s = Object.assign(self);
         if(s.kb){
