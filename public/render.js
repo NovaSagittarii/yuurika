@@ -36,6 +36,11 @@ Particle.prototype.process = function(){
   return this.d < 0; // returns true if to be removed
 }
 
+function compare(a,b) {
+  if (a.val < b.val) return -1;
+  if (a.val > b.val) return 1;
+  return 0;
+}
 function draw() {
   background(0, 0, 0);
   strokeWeight(2);
@@ -60,6 +65,7 @@ function draw() {
 
   // renders all players
   textSize(12);
+  let toSort = []; // initialize leaderboard
   for(let i = 0; i < plyrs.length; i ++){
     let plyr = plyrs[i];
     push();
@@ -78,7 +84,14 @@ function draw() {
 
     pop();
     if(plyr.accel) particles.push(new Particle(plyr.x - Math.cos(plyr.a)*15, plyr.y - Math.sin(plyr.a)*15, Math.random()*Math.PI*2, plyr.a + Math.random()*0.5-0.25, -3, 0, EXHAUST));
+    toSort.push({val: plyr.kills, name: plyr.name});
   }
+  toSort.push({val: kills, name: name});
+  toSort.sort(compare).reverse(); // sort leaderboard
+  for(let i = 0; i < Math.min(toSort.length, 5); i ++){
+    text(`#${i+1} - ${toSort[i].name} - ${toSort[i].val} kills`, width-200, 100+i*15);
+  }
+  
   noStroke();
 
   //render projectiles
