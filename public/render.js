@@ -1,4 +1,4 @@
-const PELLET = 0, TWIN = 1, GATLING = 2, SHOTGUN = 3, RAIL = 4;
+const PELLET = 0, TWIN = 1, GATLING = 2, SHOTGUN = 3, RAIL = 4, ASSAULT = 5;
 const MISSILE = 0, BURST = 1;
 const EXHAUST = 0, M_EXHAUST = 1;
 var pDecay = [10, 15];
@@ -96,6 +96,9 @@ function draw() {
           case SHOTGUN:
             rect(0, 0, 9, 4);
             break;
+          case ASSAULT:
+            rect(0, 0, 7, 3);
+            break;
           case GATLING:
             rect(0, 0, 6, 3);
             break;
@@ -175,7 +178,7 @@ function draw() {
 
   fill(255, 255, 255, 125);
   textSize(12);
-  text("PELLET TWIN GATLING SHOTGUN RAIL".split(' ')[pw] + `\n${Math.round(ammo)} / ${clipsize}`, width-120, height-50);
+  text("PELLET TWIN GATLING SHOTGUN RAIL ASSAULT".split(' ')[pw] + `\n${Math.round(ammo)} / ${clipsize}`, width-120, height-50);
   text("MISSILE BURST".split(' ')[sw], width-50, height-50);
   textSize(18);
   text("J", width-95, height-25);

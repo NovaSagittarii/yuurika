@@ -15,7 +15,7 @@ const config = {
   broadcastInterval: false, //ms
   targetFrameRate: 36, //fps
 };
-const PELLET = 0, TWIN = 1, GATLING = 2, SHOTGUN = 3, RAIL = 4;
+const PELLET = 0, TWIN = 1, GATLING = 2, SHOTGUN = 3, RAIL = 4, ASSAULT = 5;
 const MISSILE = 0, BURST = 1;
 const keys = "wasdjk".split('');
 const stats = {
@@ -23,20 +23,20 @@ const stats = {
   ts: Math.PI*0.003,
   wep: {
     pw: {
-      dmg: [12, 10, 8, 6, 18],
-      muV: [18, 18, 24, 18, 42],
+      dmg: [12, 10, 8, 6, 18, 11],
+      muV: [18, 18, 24, 18, 42, 34],
       // muzzle velocity
-      rec: [2, 4, 0.7, 8, 5],
+      rec: [2, 4, 0.7, 8, 5, 1],
       // recoil
-      kb: [4, 3, 1, 2, 4],
+      kb: [4, 3, 1, 2, 4, 1],
       // knockback
-      rof: [22, 10, 3, 65, 40],
-      cs: [8, 14, 42, 5, 3],
+      rof: [22, 12, 3, 65, 40, 5],
+      cs: [8, 14, 42, 5, 3, 20],
       //clip size
-      rlt: [120, 350, 300, 250, 250],
+      rlt: [120, 350, 300, 250, 160, 450],
       //reload time
-      range: [600, 280, 400, 300, 800],
-      pierce: [2, 2, 1, 1, 5]
+      range: [600, 480, 550, 300, 1200, 550],
+      pierce: [2, 2, 1, 1, 5, 1]
     },
     sw: {
       dmg: [64, 18],
@@ -111,7 +111,7 @@ function Player(){
   this.av = 0; // angular vel
   this.ap = 100; // armour
   this.sp = 100; // shield
-  this.pw = ~~(Math.random() * 5);
+  this.pw = ~~(Math.random() * 6);
   this.sw = BURST;
   this.pwr = 0;
   this.swr = 0;
@@ -148,6 +148,7 @@ Player.prototype.update = function(socketid){
         fireBullets(socketid, 'pw', this.pw, 0.6, 12);
       break;
       case RAIL:
+      case ASSAULT:
         fireBullets(socketid, 'pw', this.pw, 0, 1);
         break;
     }
