@@ -77,7 +77,7 @@ function Projectile(uID, type, pID, angleOffset){
   this.v = stats.wep[type].muV[pID];
   this.plyr = uID;
   plyr[uID][type+"r"] = 0;
-  this.hbs = stats.wep[type].hbs[pID];
+  //this.hbs = stats.wep[type].hbs[pID];
 }
 Projectile.prototype.update = function(){
   this.x += this.xv;
@@ -251,7 +251,8 @@ function update(){
       if(self.plyr === plyrID[j]) continue;
       let that = plyr[plyrID[j]];
       //if(dist(self.x, self.y, that.x, that.y) < 9){
-      if(Math.abs(self.x - that.x) < self.hbs && Math.abs(self.y - that.y) < self.hbs){
+      console.log(self.hbs);
+      if(Math.abs(self.x - that.x) < 24 && Math.abs(self.y - that.y) < 24){
         if(that.damage(self.dmg)) plyr[self.plyr].kills ++;
         let s = Object.assign(self);
         if(s.kb){
