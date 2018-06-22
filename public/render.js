@@ -4,6 +4,9 @@ const EXHAUST = 0, M_EXHAUST = 1;
 var pDecay = [10, 15];
 var particles = [];
 
+var alignRotation = false;
+var lastRUpdate = 255;
+
 function Particle(x, y, va, a, v, av, type){
   this.x = x;
   this.y = y;
@@ -42,6 +45,12 @@ function compare(a,b) {
   return 0;
 }
 function draw() {
+  if(keys.p){
+    keys.p = !keys.p;
+    alignRotation = !alignRotation;
+    lastRUpdate = 255;
+  }
+  
   background(0, 0, 0);
   strokeWeight(2);
   noStroke();
@@ -50,11 +59,17 @@ function draw() {
   //fill(0, 0, 0);
   textSize(24);
   text(`${~~frameRate()}FPS\n ${~~config.targetFrameRate}`, 60, 40);
-  text(plyrs.length+1 + " active users", width/2, 150);
+  text(`${plyrs.length ? plyrs.length+1 + " active users" : "You are alone.\nPerhaps you should invite a friend?"}`, width/2, 150);
+
+  if(lastRUpdate){
+    lastRUpdate -= 5;
+    fill(255, 255, 255, lastRUpdate);
+    text((alignRotation ? "Lock-to-Player" : "Fixed") + " Rotation (P)", width/2, 250);
+  }
 
   //transformations to center player to center of screen and lock viewing orientation to face upwards
   translate(~~(width/2), ~~(height/2));
-  rotate(3/2*Math.PI - a + av);
+  rotate(3/2*Math.PI - (a - av) * alignRotation);
   translate(-x, -y);
 
   for(let i = 0; i < particles.length; i ++){
@@ -75,7 +90,7 @@ function draw() {
     strokeWeight(2+plyr.sp/25);*/
     triangle(10, 0, -10, -7, -10, 7);
 
-    rotate(Math.PI/2 - plyr.a + a)
+    rotate(Math.PI/2 - plyr.a + a*alignRotation);
     text(plyr.name, 0, 20);
     fill(255, 0, 0, 100);
     rect(-25+25*plyr.ap/100, -20, 50*plyr.ap/100, 3);
@@ -183,9 +198,9 @@ function draw() {
   text(kills + " kills", 55, height-100);
   
   // render leaderboard
-  textSize(14);
+  textSize(18);
   for(let i = 0; i < Math.min(toSort.length, 5); i ++){
-    text(`#${i+1} - ${toSort[i].name} - ${toSort[i].val} kills`, width-200, 100+i*15);
+    text(`#${i+1} - ${toSort[i].name} - ${toSort[i].val} kills`, width-250, 100+i*20);
   }
   
   fill(255, 255, 255, 50);
