@@ -15,7 +15,7 @@ const config = {
   broadcastInterval: false, //ms
   targetFrameRate: 36, //fps
 };
-const PELLET = 0, TWIN = 1, GATLING = 2, SHOTGUN = 3, RAIL = 4, ASSAULT = 5;
+const U_MISSILE = 0, TWIN = 1, GATLING = 2, SHOTGUN = 3, RAIL = 4, ASSAULT = 5;
 const MISSILE = 0, BURST = 1;
 const keys = "wasdjk".split('');
 const stats = {
@@ -23,31 +23,37 @@ const stats = {
   ts: Math.PI*0.003,
   wep: {
     pw: {
-      dmg: [12, 10, 8, 6, 18, 11],
-      muV: [18, 18, 24, 18, 42, 34],
+      dmg: [30, 15, 8, 6, 88, 11],
+      muV: [-2, 22, 24, 18, 42, 34],
       // muzzle velocity
-      rec: [2, 4, 0.7, 8, 5, 1],
+      rec: [4, 4, 0.7, 8, 5, 1],
       // recoil
-      kb: [5, 3, 1, 2, 4, 1],
+      kb: [14, 4, 1, 2, 4, 1],
       // knockback
-      rof: [22, 12, 3, 65, 40, 5],
-      cs: [10, 14, 42, 3, 5, 25],
+      rof: [70, 12, 3, 65, 40, 5],
+      cs: [2, 14, 42, 3, 5, 25],
       //clip size
-      rlt: [120, 350, 300, 250, 160, 450],
+      rlt: [120, 150, 200, 250, 160, 250],
       //reload time
       range: [600, 480, 550, 300, 1200, 550],
-      pierce: [2, 2, 1, 1, 5, 1],
-      hbs: [28, 24, 18, 16, 26, 24]
+      pierce: [1, 1, 1, 1, 5, 1],
+      hbs: [28, 24, 18, 16, 22, 24],
+      pro: [[2, 10, false], null, null, null, null, null],
+      // propulsion [ float strength , int duration , boolean homing ]
+      expl: [0.4, 1, 0, 0, 0, 0]
+      // explosive
     },
     sw: {
-      dmg: [64, 18],
-      muV: [12, 9],
-      rec: [10, 14],
+      dmg: [64, 16],
+      muV: [-12, 10],
+      rec: [-8, 14],
       kb: [14, 2],
-      rof: [200, 500],
+      rof: [200, 400],
       range: [1000, 400],
       pierce: [1, 1],
       hbs: [24, 18],
+      pro: [[0.4, 90, true], [0.5, 60, true]],
+      expl: [1.4, 0.8]
     },
   }
 };
@@ -73,7 +79,21 @@ function Projectile(uID, type, pID, angleOffset){
   this.pierce = stats.wep[type].pierce[pID];
   this.type = type;
   this.id = pID;
+  this.expl = stats.wep[type].expl[pID];
+  if(stats.wep[type].pro[pID]){
+    this.pro = stats.wep[type].pro[pID];
+    if(this.pro[2] && plyrID.length > 1){
+      let dists = [];
+      for(let i = 0; i < plyrID.length; i ++){
+        let p = plyr[plyrID[i]];
+        dists.push({P: plyrID[i], d: Math.abs((p.x+p.xv*3) - this.x) + Math.abs((p.y+p.yv*3) - this.y)});
+      }
+      this.target = plyr[dists.sort((a, b) => a.d - b.d)[1].P];
+      if(this.target) console.log('set target to', this.target.name);
+    }
+  }
   this.d = stats.wep[type].range[pID];
+  this.f = 0;
   this.v = stats.wep[type].muV[pID];
   this.plyr = uID;
   plyr[uID][type+"r"] = 0;
@@ -83,9 +103,15 @@ Projectile.prototype.update = function(){
   this.x += this.xv;
   this.y += this.yv;
   this.d -= this.v;
+  ++ this.f;
+  if(this.pro && this.f < this.pro[1]){
+    this.xv += Math.cos(this.a) * this.pro[0];
+    this.yv += Math.sin(this.a) * this.pro[0];
+    if(this.target) this.a += Math.max(Math.min(Math.atan2(this.target.y - (this.y+this.yv*3), this.target.x - (this.x+this.xv*3)) - this.a, 0.4), -0.4);
+  }
   return (this.d < 0 || !this.pierce);
 };
-Projectile.prototype.returnData = function(){server
+Projectile.prototype.returnData = function(){
   return {
     x: this.x,
     y: this.y,
@@ -115,7 +141,7 @@ function Player(){
   this.ap = 100; // armour
   this.sp = 100; // shield
   this.pw = ~~(Math.random() * 6);
-  this.sw = BURST;
+  this.sw = MISSILE;//BURST;
   this.pwr = 0;
   this.swr = 0;
   this.scd = 0;
@@ -140,7 +166,9 @@ Player.prototype.update = function(socketid){
   if(this.state.pw && this.pwr > this.pwtr && this.pwam > 0){
     this.pwam --;
     switch(this.pw){
-      case PELLET:
+      case U_MISSILE:
+        fireBullets(socketid, 'pw', this.pw, 0, 1);
+        break;
       case TWIN:
         fireBullets(socketid, 'pw', this.pw, 0, 1);
         break;
@@ -166,7 +194,7 @@ Player.prototype.update = function(socketid){
     switch(this.sw){
       case MISSILE:
       case BURST:
-        fireBullets(socketid, 'sw', this.sw, 0.4, !this.sw + 5);
+        fireBullets(socketid, 'sw', this.sw, 0.4 * this.sw, this.sw ? 5 : 1);
         break;
     }
   }
@@ -251,7 +279,6 @@ function update(){
       if(self.plyr === plyrID[j]) continue;
       let that = plyr[plyrID[j]];
       //if(dist(self.x, self.y, that.x, that.y) < 9){
-      console.log(self.hbs);
       if(Math.abs(self.x - that.x) < 24 && Math.abs(self.y - that.y) < 24){
         if(that.damage(self.dmg)) plyr[self.plyr].kills ++;
         let s = Object.assign(self);
@@ -259,8 +286,8 @@ function update(){
           that.xv += s.kb * Math.cos(s.a);
           that.yv += s.kb * Math.sin(s.a);
         }
-        if(self.type === "sw" && self.id < 2){
-          projectiles.push({type: "expl", c: 0, a: 1, x: s.x, y: s.y, returnData: Projectile.prototype.returnData, update: function(){ return this.c++;}});
+        if(self.expl){
+          projectiles.push({type: "expl", c: 0, a: self.expl, x: s.x, y: s.y, returnData: Projectile.prototype.returnData, update: function(){ return this.c++;}});
         }
         if(!(--self.pierce)) break;
       }
@@ -291,12 +318,12 @@ io.on('connection', function(socket){
   if(!IPs[address]) IPs[address] = socket.id;
 
   socket.on('input', function(data){
-    if(IPs[address] !== socket.id){
+    /*if(IPs[address] !== socket.id){
       io.sockets.connected[IPs[address]].disconnect();
       IPs[address] = socket.id;
       console.log(' < disconnected IP ' + address + ' cID: ' + socket.id);
       return;
-    }
+    }*/
     if(plyr[socket.id]){
       if(plyr[socket.id].updateState(data)){
         console.log("DISCONNECTED!!!")

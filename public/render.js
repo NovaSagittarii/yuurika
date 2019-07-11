@@ -1,4 +1,4 @@
-const PELLET = 0, TWIN = 1, GATLING = 2, SHOTGUN = 3, RAIL = 4, ASSAULT = 5;
+const U_MISSILE = 0, TWIN = 1, GATLING = 2, SHOTGUN = 3, RAIL = 4, ASSAULT = 5;
 const MISSILE = 0, BURST = 1;
 const EXHAUST = 0, M_EXHAUST = 1;
 var pDecay = [10, 15];
@@ -50,7 +50,7 @@ function draw() {
     alignRotation = !alignRotation;
     lastRUpdate = 255;
   }
-  
+
   background(0, 0, 0);
   strokeWeight(2);
   noStroke();
@@ -103,7 +103,7 @@ function draw() {
   }
   toSort.push({val: kills, name: name}); // add player to leaderboard
   toSort.sort(compare).reverse(); // sort leaderboard
-  
+
   noStroke();
 
   //render projectiles
@@ -116,7 +116,10 @@ function draw() {
     switch(obj.type){
       case "pw":
         switch(obj.id){
-          case PELLET:
+          case U_MISSILE:
+            quad(10, 0, -10, 7, -6, 0, -10, -7);
+            particles.push(new Particle(obj.x - Math.cos(obj.a) * 10, obj.y - Math.sin(obj.a) * 10, Math.random()*Math.PI*2, obj.a + Math.random()*0.3-0.15, -1, 0, M_EXHAUST));
+            break;
           case TWIN:
           case SHOTGUN:
             rect(0, 0, 9, 4);
@@ -136,14 +139,14 @@ function draw() {
         switch(obj.id){
           case MISSILE:
           case BURST:
-            quad(7, 0, -7, 5, -4, 0, -7, -5);
+            obj.id ? quad(7, 0, -7, 5, -4, 0, -7, -5) : quad(10, 0, -10, 7, -6, 0, -10, -7);
             particles.push(new Particle(obj.x - Math.cos(obj.a) * 10, obj.y - Math.sin(obj.a) * 10, Math.random()*Math.PI*2, obj.a + Math.random()*0.3-0.15, -1, 0, M_EXHAUST));
             break;
         }
         break;
       case "expl":
         for(let j = 0; j < 24*obj.a; j ++){
-          particles.push(new Particle(obj.x, obj.y, Math.random()*Math.PI*2, Math.random()*Math.PI*2, Math.random()*5*obj.a, 0, M_EXHAUST));
+          particles.push(new Particle(obj.x, obj.y, Math.random()*Math.PI*2, Math.random()*Math.PI*2, Math.random()*5, 0, M_EXHAUST));
         }
         projectiles.splice(i, 1);
         break;
@@ -151,9 +154,13 @@ function draw() {
     pop();
   }
 
-  stroke(255, 255, 255, 20);
+  stroke(255, 255, 255, 30);
   noFill(); // draw bounding box
   rect(config.width/2, config.height/2, config.width, config.height);
+  stroke(255, 255, 255, 16);
+  rect(config.width/2, config.height/2, config.width+10, config.height+10);
+  stroke(255, 255, 255, 8);
+  rect(config.width/2, config.height/2, config.width+20, config.height+20);
   // render player
   translate(x, y);
   rotate(a);
@@ -196,21 +203,21 @@ function draw() {
 
   fill(255, 255, 255, 200);
   text(kills + " kills", 55, height-100);
-  
+
   // render leaderboard
   textSize(18);
   for(let i = 0; i < Math.min(toSort.length, 5); i ++){
     text(`#${i+1} - ${toSort[i].name} - ${toSort[i].val} kills`, width-250, 100+i*20);
   }
-  
+
   fill(255, 255, 255, 50);
   ellipse(width-120, height-50, 50, 50);
   ellipse(width-50, height-50, 50, 50);
 
   fill(255, 255, 255, 125);
   textSize(12);
-  text("PELLET TWIN GATLING SHOTGUN RAIL ASSAULT".split(' ')[pw] + `\n${Math.round(ammo)} / ${clipsize}`, width-120, height-50);
-  text("MISSILE BURST".split(' ')[sw], width-50, height-50);
+  text("ROCKET TWIN GATLING SHOTGUN RAIL ASSAULT".split(' ')[pw] + `\n${Math.round(ammo)} / ${clipsize}`, width-120, height-50);
+  text("GUIDED\nMISSILE BURST".split(' ')[sw], width-50, height-50);
   textSize(18);
   text("J", width-95, height-25);
   text("K", width-25, height-25);
