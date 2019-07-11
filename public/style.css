@@ -1,8 +1,15 @@
+* {
+  font-family: 'Share', cursive;
+}
+
 body {
   margin: 0px;
   overflow: hidden;
-  font-family: 'Share', cursive;
   background-color: black;
+}
+
+a {
+  color: gray;
 }
 
 #title {
@@ -14,7 +21,6 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-family: 'Share', cursive;
 }
 #input {
   height: 24px;
@@ -23,7 +29,6 @@ body {
   text-align: center;
   vertical-align: middle;
   font-size: 24px;
-  font-family: 'Share', cursive;
 }
 
 .button {

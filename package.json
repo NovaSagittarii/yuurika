@@ -1,9 +1,9 @@
 {
 	"name": "yuurika",
-	"version": "0.0.2",
-	"description": "CodeCamp 2018 Entry",
+	"version": "0.0.3",
+	"description": "yuurika game server",
 	"author": {
-		"name": "Thomas Li"
+		"name": "NovaSagittarii"
 	},
 	"dependencies": {
 		"express": "^4.16.3",
@@ -13,6 +13,16 @@
 		"socket.io": "^2.1.1"
 	},
 	"scripts": {
-	  "start": "node index.js"
-	}
+		"start": "node index.js"
+	},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NovaSagittarii/yuurika.git"
+  },
+	"private": true,
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/NovaSagittarii/yuurika/issues"
+  },
+  "homepage": "https://github.com/NovaSagittarii/yuurika"
 }
