@@ -15,7 +15,7 @@ function Particle(x, y, va, a, v, av, type){
   this.v = v;
   this.av = av;
   this.t = type;
-  this.d = 255;
+  this.d = 200;
 }
 Particle.prototype.process = function(){
   this.x += Math.cos(this.a) * this.v;
@@ -145,7 +145,7 @@ function draw() {
         }
         break;
       case "expl":
-        for(let j = 0; j < 24*obj.a; j ++){
+        for(let j = 0; j < 16*obj.a; j ++){
           particles.push(new Particle(obj.x, obj.y, Math.random()*Math.PI*2, Math.random()*Math.PI*2, Math.random()*5, 0, M_EXHAUST));
         }
         projectiles.splice(i, 1);

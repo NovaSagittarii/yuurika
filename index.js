@@ -40,7 +40,7 @@ const stats = {
       hbs: [28, 24, 18, 16, 22, 24],
       pro: [[2, 10, false], null, null, null, null, null],
       // propulsion [ float strength , int duration , boolean homing ]
-      expl: [0.4, 1, 0, 0, 0, 0]
+      expl: [0.4, 0, 0, 0, 0, 0]
       // explosive
     },
     sw: {
@@ -52,8 +52,8 @@ const stats = {
       range: [1000, 400],
       pierce: [1, 1],
       hbs: [24, 18],
-      pro: [[0.4, 90, true], [0.5, 60, true]],
-      expl: [1.4, 0.8]
+      pro: [[0.4, 90, true], [0.5, 20, true]],
+      expl: [1.2, 0.6]
     },
   }
 };
@@ -141,7 +141,7 @@ function Player(){
   this.ap = 100; // armour
   this.sp = 100; // shield
   this.pw = ~~(Math.random() * 6);
-  this.sw = MISSILE;//BURST;
+  this.sw = ~~(Math.random() * 2);
   this.pwr = 0;
   this.swr = 0;
   this.scd = 0;
