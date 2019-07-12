@@ -38,8 +38,8 @@ const stats = {
       range: [600, 480, 550, 300, 1200, 550],
       pierce: [1, 1, 1, 1, 5, 1],
       hbs: [28, 24, 18, 16, 22, 24],
-      pro: [[2, 10, false], null, null, null, null, null],
-      // propulsion [ float strength , int duration , boolean homing ]
+      pro: [[2, 10], null, null, null, null, null],
+      // propulsion [ float strength , int duration , int homingDuration , int homingSpeed ]
       expl: [0.4, 0, 0, 0, 0, 0]
       // explosive
     },
@@ -49,10 +49,10 @@ const stats = {
       rec: [-8, 14],
       kb: [14, 2],
       rof: [200, 400],
-      range: [1000, 400],
+      range: [700, 400],
       pierce: [1, 1],
       hbs: [24, 18],
-      pro: [[0.4, 90, true], [0.5, 20, true]],
+      pro: [[0.4, 24, 1000, 0.8], null],
       expl: [1.2, 0.6]
     },
   }
@@ -67,6 +67,11 @@ var plyr = {};
 var plyrID = [];
 var projectiles = [];
 var IPs = {};
+
+const TWO_PI = Math.PI*2;
+const constrain = (x, min, max) => Math.max(Math.min(x, max), min);
+const cd = (x, y) => Math.min(Math.abs(x - y), TWO_PI - Math.abs(x - y)); // circular distance
+const dir = (x, y) => cd(x, y+1) < cd(x, y-1) ? 1 : -1;
 
 function Projectile(uID, type, pID, angleOffset){
   this.x = plyr[uID].x;
@@ -107,7 +112,12 @@ Projectile.prototype.update = function(){
   if(this.pro && this.f < this.pro[1]){
     this.xv += Math.cos(this.a) * this.pro[0];
     this.yv += Math.sin(this.a) * this.pro[0];
-    if(this.target) this.a += Math.max(Math.min(Math.atan2(this.target.y - (this.y+this.yv*3), this.target.x - (this.x+this.xv*3)) - this.a, 0.4), -0.4);
+  }else if(this.target && this.f < this.pro[2]){
+    let tA = (TWO_PI+Math.atan2(this.target.y - (this.y+this.yv*3), this.target.x - (this.x+this.xv*3)))%TWO_PI;
+    this.a = (TWO_PI+this.a)%TWO_PI;
+    this.a += dir(tA, this.a) * Math.min(Math.abs(tA - this.a), .2);
+    this.xv = (this.xv + Math.cos(this.a) * this.pro[3]) / 1.08;
+    this.yv = (this.yv + Math.sin(this.a) * this.pro[3]) / 1.08;
   }
   return (this.d < 0 || !this.pierce);
 };
@@ -194,7 +204,7 @@ Player.prototype.update = function(socketid){
     switch(this.sw){
       case MISSILE:
       case BURST:
-        fireBullets(socketid, 'sw', this.sw, 0.4 * this.sw, this.sw ? 5 : 1);
+        fireBullets(socketid, 'sw', this.sw, 0.4 * this.sw, this.sw ? 7 : 1);
         break;
     }
   }

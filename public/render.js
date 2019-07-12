@@ -1,7 +1,7 @@
 const U_MISSILE = 0, TWIN = 1, GATLING = 2, SHOTGUN = 3, RAIL = 4, ASSAULT = 5;
 const MISSILE = 0, BURST = 1;
-const EXHAUST = 0, M_EXHAUST = 1;
-var pDecay = [10, 15];
+const EXHAUST = 0, M_EXHAUST = 1, EXPLOSION = 2;
+var pDecay = [15, 51, 25];
 var particles = [];
 
 var alignRotation = false;
@@ -15,7 +15,7 @@ function Particle(x, y, va, a, v, av, type){
   this.v = v;
   this.av = av;
   this.t = type;
-  this.d = 200;
+  this.d = 255;
 }
 Particle.prototype.process = function(){
   this.x += Math.cos(this.a) * this.v;
@@ -27,6 +27,7 @@ Particle.prototype.process = function(){
   switch(this.t){
     case EXHAUST:
     case M_EXHAUST:
+    case EXPLOSION:
       this.v /= 1.02;
       fill(255, this.d, 0, this.d*1.4);
       //rect(0, 0, 100, 100);
@@ -146,7 +147,7 @@ function draw() {
         break;
       case "expl":
         for(let j = 0; j < 16*obj.a; j ++){
-          particles.push(new Particle(obj.x, obj.y, Math.random()*Math.PI*2, Math.random()*Math.PI*2, Math.random()*5, 0, M_EXHAUST));
+          particles.push(new Particle(obj.x, obj.y, Math.random()*Math.PI*2, Math.random()*Math.PI*2, Math.random()*5, 0, EXPLOSION));
         }
         projectiles.splice(i, 1);
         break;
@@ -229,10 +230,10 @@ function draw() {
   arc(width-120, height-50, 46, 46, 0, Math.PI*2*constrain(pwr/pwrof, 0, 1));
   arc(width-50, height-50, 50, 50, 0, Math.PI*2*constrain(swr/swrof, 0, 1));
   if(this.reload){
-    arc(width/2, height/2, 150, 150, 0, Math.PI*2*constrain(reload/reloadtime, 0, 1));
+    arc(width/2, height/2, 150, 150, -Math.PI, Math.PI+Math.PI*2*constrain(reload/reloadtime, 0, 1));
     strokeWeight(6);
     stroke(255, 255, 255, 40)
-    arc(width/2, height/2, 150, 150, 0, Math.PI*2);
+    ellipse(width/2, height/2, 150, 150);
     noStroke();
     fill(255, 255, 255, 150);
     text("Reloading primary weapon...", width/2, height/2 + 100);
