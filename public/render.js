@@ -100,9 +100,9 @@ function draw() {
 
     pop();
     if(plyr.accel) particles.push(new Particle(plyr.x - Math.cos(plyr.a)*15, plyr.y - Math.sin(plyr.a)*15, Math.random()*Math.PI*2, plyr.a + Math.random()*0.5-0.25, -3, 0, EXHAUST));
-    toSort.push({val: plyr.kills, name: plyr.name});
+    toSort.push({val: plyr.score, name: plyr.name});
   }
-  toSort.push({val: kills, name: name}); // add player to leaderboard
+  toSort.push({val: score, name: name}); // add player to leaderboard
   toSort.sort(compare).reverse(); // sort leaderboard
 
   noStroke();
@@ -202,14 +202,16 @@ function draw() {
   rect(40+145*sp/100, height-50, 290*sp/100, 20, 5);
   text(Math.round(sp) + "SP", 315, height-75);
 
-  fill(255, 255, 255, 200);
-  text(kills + " kills", 55, height-100);
+  if(score) score2 -= (score2 - score) / 7;
 
-  // render leaderboard
-  textSize(18);
-  for(let i = 0; i < Math.min(toSort.length, 5); i ++){
-    text(`#${i+1} - ${toSort[i].name} - ${toSort[i].val} kills`, width-250, 100+i*20);
-  }
+  try {
+    fill(255, 255, 255, 200);
+    text(`Score: ${Math.round(score2).toLocaleString()} || ${kills} kills`, 185, height-100);
+    // render leaderboard
+    textSize(18);
+    for(let i = 0; i < Math.min(toSort.length, 5); i ++) text(`#${i+1} - ${toSort[i].name} - ${toSort[i].val.toLocaleString()} pts`, width-250, 100+i*20);
+
+  } catch (x) {}
 
   fill(255, 255, 255, 50);
   ellipse(width-120, height-50, 50, 50);

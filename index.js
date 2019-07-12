@@ -141,7 +141,7 @@ function fireBullets(uID, type, pID, angleOffset, repeat){
   plyr[uID][type+"r"] = 0;
 }
 
-function Player(){
+function Player(name, score){
   this.x = Math.random()*config.width;
   this.y = Math.random()*config.height;
   this.a = 0;  // rotation alignment
@@ -163,9 +163,9 @@ function Player(){
   this.pwrltcd = 0;
   this.state = Object.assign(keySet);
   this.kills = 0;
-  this.score = 0;
+  this.score = score || 0;
   this.dead = false;
-  this.name = "";
+  this.name = name || "";
 }
 Player.prototype.update = function(socketid){
   if(this.state.w || this.state.s){
@@ -240,10 +240,11 @@ Player.prototype.returnData = function(){
     sp: this.sp,
     accel: this.state.w || this.state.s,
     name: this.name,
-    kills: this.kills
+    kills: this.kills,
+    score: this.score
   }
 };
-Player.prototype.damage = function(dmg){
+Player.prototype.damage = function(dmg, src){
   if(!dmg) return;
   if(this.sp >= 1){
     this.scd = 150;
@@ -252,7 +253,10 @@ Player.prototype.damage = function(dmg){
     this.scd = 1000;
     this.ap -= dmg;
     if(this.dead === null) this.dead = true;
-    if(this.ap < 1 && this.dead === false) this.dead = null;
+    if(this.ap < 1 && this.dead === false){
+      this.dead = null;
+      src.score += Math.round(this.score*.75 + this.kills*40);
+    }
   }
   return this.ap < 1 && !this.dead;
 };
@@ -279,18 +283,20 @@ function update(){
       io.to(socketID).emit('update', data);
     }
   }
-  for(let i = 0; i < projectiles.length; i ++){
+  for(let i = projectiles.length-1; i >= 0; i--){ // reverse parse to ignore added projectiles (explosion indicators)
     if(projectiles[i].update()){
       projectiles.splice(i, 1);
       continue;
     }
     let self = projectiles[i];
+    if(self.type == 'expl') continue;
     for(let j = 0; j < plyrID.length; j ++){
       if(self.plyr === plyrID[j]) continue;
       let that = plyr[plyrID[j]];
       //if(dist(self.x, self.y, that.x, that.y) < 9){
       if(Math.abs(self.x - that.x) < 24 && Math.abs(self.y - that.y) < 24){
-        if(that.damage(self.dmg)) plyr[self.plyr].kills ++;
+        plyr[self.plyr].score += self.dmg;
+        if(that.damage(self.dmg, plyr[self.plyr])) plyr[self.plyr].kills ++;
         let s = Object.assign(self);
         if(s.kb){
           that.xv += s.kb * Math.cos(s.a);
@@ -309,9 +315,7 @@ function broadcastData(){
   broadcast = true;
 }
 function respawnPlayer(socketid){
-  let name = plyr[socketid].name;
-  plyr[socketid] = new Player();
-  plyr[socketid].name = name;
+  plyr[socketid] = new Player(plyr[socketid].name, Math.round(plyr[socketid].score/4));
   console.log('->     respawned! cID: ' + socketid);
 }
 function disconnect(socketid){
@@ -349,8 +353,7 @@ io.on('connection', function(socket){
     name.replace(/\n/g, "");
     if(!name || name === "") name = defaultNames[plyrID.length % defaultNames.length];
     plyrID.push(socket.id);
-    plyr[socket.id] = new Player();
-    plyr[socket.id].name = name.substr(0, 16);
+    plyr[socket.id] = new Player(name.substr(0, 16), 0);
     io.to(socket.id).emit('setConfig', config);
   });
   socket.on('disconnect', function(){

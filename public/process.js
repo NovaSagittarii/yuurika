@@ -15,7 +15,7 @@ var sp = 100;
 var pw, sw;
 var pwr;
 var swr;
-var kills;
+var kills, score, score2 = 0;
 var pwrof; //primary/secondary rate of fire
 var swrof;
 var name;
@@ -50,6 +50,7 @@ function update(data){
   swr = SELF.swr;
   name = SELF.name;
   kills = SELF.kills;
+  score = SELF.score;
   state = SELF.state;
   plyrs = data.plyrs;
   projectiles = data.prjctls;
@@ -59,8 +60,6 @@ function update(data){
   ammo -= (ammo - SELF.pwam) / 5;
   reloadtime = SELF.pwrlt;
   reload = SELF.pwrltcd;
-
-  console.log("updated! to " + state)
 }
 function updateConfig(newConfig){
   config = Object.assign(newConfig);
