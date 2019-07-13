@@ -1,7 +1,7 @@
 const U_MISSILE = 0, TWIN = 1, GATLING = 2, SHOTGUN = 3, RAIL = 4, ASSAULT = 5;
 const MISSILE = 0, BURST = 1;
 const EXHAUST = 0, M_EXHAUST = 1, EXPLOSION = 2;
-var pDecay = [15, 51, 25];
+var pDecay = [15, 30, 25];
 var particles = [];
 
 var alignRotation = false;
@@ -49,6 +49,7 @@ function draw() {
   if(keys.p){
     keys.p = !keys.p;
     alignRotation = !alignRotation;
+    cy = alignRotation ? cy_a : cy_c;
     lastRUpdate = 255;
   }
 
@@ -69,7 +70,7 @@ function draw() {
   }
 
   //transformations to center player to center of screen and lock viewing orientation to face upwards
-  translate(~~(width/2), ~~(height/2));
+  translate(cx, cy);
   rotate(3/2*Math.PI - (a - av) * alignRotation);
   translate(-x, -y);
 
@@ -85,22 +86,22 @@ function draw() {
   for(let i = 0; i < plyrs.length; i ++){
     let plyr = plyrs[i];
     push();
-    translate(plyr.x, plyr.y);
-    rotate(plyr.a);
+    translate(plyr[0], plyr[1]);
+    rotate(plyr[2]);
     /*stroke(100, 255, 255, plyr.sp);
     strokeWeight(2+plyr.sp/25);*/
     triangle(10, 0, -10, -7, -10, 7);
 
-    rotate(Math.PI/2 - plyr.a + a*alignRotation);
-    text(plyr.name, 0, 20);
+    rotate(HALF_PI - plyr[2] + a*alignRotation);
+    text(plyr[11], 0, 20);
     fill(255, 0, 0, 100);
-    rect(-25+25*plyr.ap/100, -20, 50*plyr.ap/100, 3);
+    rect(-25+25*plyr[6]/100, -20, 50*plyr[6]/100, 3);
     fill(100, 100, 255, 100);
-    rect(-25+25*plyr.sp/100, -23, 50*plyr.sp/100, 3);
+    rect(-25+25*plyr[7]/100, -23, 50*plyr[7]/100, 3);
 
     pop();
-    if(plyr.accel) particles.push(new Particle(plyr.x - Math.cos(plyr.a)*15, plyr.y - Math.sin(plyr.a)*15, Math.random()*Math.PI*2, plyr.a + Math.random()*0.5-0.25, -3, 0, EXHAUST));
-    toSort.push({val: plyr.score, name: plyr.name});
+    if(plyr[8]) particles.push(new Particle(plyr[0] - Math.cos(plyr[2])*15, plyr[1] - Math.sin(plyr[2])*15, Math.random()*TWO_PI, plyr[2] + Math.random()*0.5-0.25, -3, 0, EXHAUST));
+    toSort.push({val: plyr[10], name: plyr[11]});
   }
   toSort.push({val: score, name: name}); // add player to leaderboard
   toSort.sort(compare).reverse(); // sort leaderboard
@@ -111,15 +112,15 @@ function draw() {
   for(let i = 0; i < projectiles.length; i ++){
     let obj = projectiles[i];
     push();
-    translate(obj.x, obj.y);
-    rotate(obj.a);
-    fill(200, obj.d*2);
-    switch(obj.type){
-      case "pw":
-        switch(obj.id){
+    translate(obj[0], obj[1]);
+    rotate(obj[2]);
+    fill(200, obj[5]*2);
+    switch(obj[3]){
+      case 0:
+        switch(obj[4]){
           case U_MISSILE:
             quad(10, 0, -10, 7, -6, 0, -10, -7);
-            particles.push(new Particle(obj.x - Math.cos(obj.a) * 10, obj.y - Math.sin(obj.a) * 10, Math.random()*Math.PI*2, obj.a + Math.random()*0.3-0.15, -1, 0, M_EXHAUST));
+            particles.push(new Particle(obj[0] - Math.cos(obj[2]) * 10, obj[1] - Math.sin(obj[2]) * 10, Math.random()*TWO_PI, obj[2] + Math.random()*0.3-0.15, -1, 0, M_EXHAUST));
             break;
           case TWIN:
           case SHOTGUN:
@@ -133,21 +134,21 @@ function draw() {
             break;
           case RAIL:
             rect(0, 0, 40, 2, 2);
-            particles.push(new Particle(obj.x - Math.cos(obj.a) * 10, obj.y - Math.sin(obj.a) * 10, Math.random()*Math.PI*2, obj.a + Math.random()*0.3-0.15, -1, 0, M_EXHAUST));
+            particles.push(new Particle(obj[0] - Math.cos(obj[2]) * 10, obj[1] - Math.sin(obj[2]) * 10, Math.random()*TWO_PI, obj[2] + Math.random()*0.3-0.15, -1, 0, M_EXHAUST));
         }
         break;
-      case "sw":
-        switch(obj.id){
+      case 1:
+        switch(obj[4]){
           case MISSILE:
           case BURST:
-            obj.id ? quad(7, 0, -7, 5, -4, 0, -7, -5) : quad(10, 0, -10, 7, -6, 0, -10, -7);
-            particles.push(new Particle(obj.x - Math.cos(obj.a) * 10, obj.y - Math.sin(obj.a) * 10, Math.random()*Math.PI*2, obj.a + Math.random()*0.3-0.15, -1, 0, M_EXHAUST));
+            obj[4] ? quad(7, 0, -7, 5, -4, 0, -7, -5) : quad(10, 0, -10, 7, -6, 0, -10, -7);
+            particles.push(new Particle(obj[0] - Math.cos(obj[2]) * 10, obj[1] - Math.sin(obj[2]) * 10, Math.random()*TWO_PI, obj[2] + Math.random()*0.3-0.15, -1, 0, M_EXHAUST));
             break;
         }
         break;
-      case "expl":
-        for(let j = 0; j < 16*obj.a; j ++){
-          particles.push(new Particle(obj.x, obj.y, Math.random()*Math.PI*2, Math.random()*Math.PI*2, Math.random()*5, 0, EXPLOSION));
+      case 2:
+        for(let j = 0; j < 16*obj[2]; j ++){
+          particles.push(new Particle(obj[0], obj[1], Math.random()*TWO_PI, Math.random()*TWO_PI, Math.random()*5, 0, EXPLOSION));
         }
         projectiles.splice(i, 1);
         break;
@@ -174,7 +175,7 @@ function draw() {
   if(keys.w || keys.s){
     xv += Math.cos(a) * accel * (1-1.2*keys.s);
     yv += Math.sin(a) * accel * (1-1.2*keys.s);
-    particles.push(new Particle(x - Math.cos(a) * 15, y - Math.sin(a) * 15, Math.random()*Math.PI*2, a + Math.random()*0.5-0.25, -3, 0, EXHAUST));
+    particles.push(new Particle(x - Math.cos(a) * 15, y - Math.sin(a) * 15, Math.random()*TWO_PI, a + Math.random()*0.5-0.25, -3, 0, EXHAUST));
   }
   if(keys.a || keys.d) av += ts * (1-2*keys.a);
   x += xv;
@@ -191,7 +192,7 @@ function draw() {
   strokeCap(PROJECT);
   textSize(14);
   fill(255);
-  text(name, width/2, height/2+20);
+  text(name, cx, cy+20);
   textSize(18);
   fill(255, 255, 255, 50);
   rect(185, height-50, 300, 30, 5);
@@ -227,21 +228,24 @@ function draw() {
   strokeWeight(4);
   noFill();
   stroke(255, 255, 220, 100);
-  arc(width-120, height-50, 54, 54, 0, Math.PI*2*constrain(ammo/clipsize, 0, 1));
+  arc(width-120, height-50, 54, 54, 0, TWO_PI*constrain(ammo/clipsize, 0, 1));
   stroke(255, 255, 255, 100)
-  arc(width-120, height-50, 46, 46, 0, Math.PI*2*constrain(pwr/pwrof, 0, 1));
-  arc(width-50, height-50, 50, 50, 0, Math.PI*2*constrain(swr/swrof, 0, 1));
-  if(this.reload){
-    arc(width/2, height/2, 150, 150, -Math.PI, Math.PI+Math.PI*2*constrain(reload/reloadtime, 0, 1));
+  arc(width-120, height-50, 46, 46, 0, TWO_PI*constrain(pwr/pwrof, 0, 1));
+  arc(width-50, height-50, 50, 50, 0, TWO_PI*constrain(swr/swrof, 0, 1));
+  if(reload){
+    arc(cx, cy, 150, 150, -HALF_PI, -HALF_PI+TWO_PI*constrain(reload/reloadtime, 0, 1));
     strokeWeight(6);
     stroke(255, 255, 255, 40)
-    ellipse(width/2, height/2, 150, 150);
+    ellipse(cx, cy, 150, 150);
     noStroke();
     fill(255, 255, 255, 150);
-    text("Reloading primary weapon...", width/2, height/2 + 100);
+    text("Reloading primary weapon...", cx, cy + 100);
   }
   strokeWeight(1);
 }
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+  cx = windowWidth >> 1;
+  cy = cy_c = windowHeight >> 1;
+  cy_a = windowHeight * 2/3;
 }

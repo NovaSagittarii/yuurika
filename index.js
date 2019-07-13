@@ -13,11 +13,16 @@ const config = {
   width:  1200,
   height: 1200,
   broadcastInterval: false, //ms
-  targetFrameRate: 36, //fps
+  targetFrameRate: 30, //fps
 };
 const U_MISSILE = 0, TWIN = 1, GATLING = 2, SHOTGUN = 3, RAIL = 4, ASSAULT = 5;
 const MISSILE = 0, BURST = 1;
 const keys = "wasdjk".split('');
+const PARTICLECODE = {
+  pw: 0,
+  sw: 1,
+  expl: 2
+}
 const stats = {
   accel: 1,
   ts: Math.PI*0.003,
@@ -94,7 +99,6 @@ function Projectile(uID, type, pID, angleOffset){
         dists.push({P: plyrID[i], d: Math.abs((p.x+p.xv*3) - this.x) + Math.abs((p.y+p.yv*3) - this.y)});
       }
       this.target = plyr[dists.sort((a, b) => a.d - b.d)[1].P];
-      if(this.target) console.log('set target to', this.target.name);
     }
   }
   this.d = stats.wep[type].range[pID];
@@ -122,14 +126,7 @@ Projectile.prototype.update = function(){
   return (this.d < 0 || !this.pierce);
 };
 Projectile.prototype.returnData = function(){
-  return {
-    x: this.x,
-    y: this.y,
-    a: this.a,
-    type: this.type,
-    id: this.id,
-    d: this.d
-  }
+  return ((~~this.x)) + ',' + ((~~this.y)) + ',' + this.a.toFixed(2) + ',' + PARTICLECODE[this.type] + ',' + (this.id||0) + ',' + (this.d||0);
 };
 
 function fireBullets(uID, type, pID, angleOffset, repeat){
@@ -141,7 +138,7 @@ function fireBullets(uID, type, pID, angleOffset, repeat){
   plyr[uID][type+"r"] = 0;
 }
 
-function Player(name, score){
+function Player(socketid, name, score){
   this.x = Math.random()*config.width;
   this.y = Math.random()*config.height;
   this.a = 0;  // rotation alignment
@@ -166,14 +163,18 @@ function Player(name, score){
   this.score = score || 0;
   this.dead = false;
   this.name = name || "";
+  io.to(socketid).emit('updateS', this.returnData_ps());
 }
 Player.prototype.update = function(socketid){
-  if(this.state.w || this.state.s){
-    this.xv += Math.cos(this.a) * stats.accel * (1-1.2*this.state.s);
-    this.yv += Math.sin(this.a) * stats.accel * (1-1.2*this.state.s);
+  if(this.state & 1 | this.state & 2){
+    this.xv += Math.cos(this.a) * stats.accel * (1-0.6*(this.state & 2));
+    this.yv += Math.sin(this.a) * stats.accel * (1-0.6*(this.state & 2));
   }
-  if(this.state.a || this.state.d) this.av += stats.ts * (1-2*this.state.a);
-  if(this.state.pw && this.pwr > this.pwtr && this.pwam > 0){
+  if(this.state & 4 | this.state & 8) this.av += stats.ts * (1 - ((this.state & 4) >> 1));
+
+  ++this.pwr;
+  ++this.swr;
+  if(this.state & 16 && this.pwr > this.pwtr && this.pwam > 0){
     this.pwam --;
     switch(this.pw){
       case U_MISSILE:
@@ -200,7 +201,8 @@ Player.prototype.update = function(socketid){
       this.pwrltcd = 0;
     }
   }
-  if(this.state.sw && this.swr > this.swtr){
+  if(this.state & 32 && this.swr > this.swtr){
+    this.swr = 0;
     switch(this.sw){
       case MISSILE:
       case BURST:
@@ -215,8 +217,6 @@ Player.prototype.update = function(socketid){
   this.xv /= 1.1;
   this.yv /= 1.1;
   this.av /= 1.1;
-  ++this.pwr;
-  ++this.swr;
   if(this.x < 0) this.x = 0;
   if(this.y < 0) this.y = 0;
   if(this.x > config.width) this.x = config.width;
@@ -224,26 +224,18 @@ Player.prototype.update = function(socketid){
   return this.ap < 1 || this.pierce < 1;
 };
 Player.prototype.updateState = function(input){
-  if(isNaN(this.x) || isNaN(this.y) || isNaN(this.a)) return true; // I N V A L I D    M O V E M E N T   :hyperAngery:
-  //for(let i = 0; i < keys.length; i ++) this.state[keys[i]] = input[keys[i]];
-  this.state = Object.assign(input);
+  //if(isNaN(this.x) || isNaN(this.y) || isNaN(this.a)) return true; // I N V A L I D    M O V E M E N T   :hyperAngery:
+  this.state = input.charCodeAt(0);
 };
 Player.prototype.returnData = function(){
-  return {
-    x: this.x,
-    y: this.y,
-    a: this.a,
-    xv: this.xv,
-    yv: this.yv,
-    av: this.av,
-    ap: this.ap,
-    sp: this.sp,
-    accel: this.state.w || this.state.s,
-    name: this.name,
-    kills: this.kills,
-    score: this.score
-  }
+  return (~~this.x) + ',' + (~~this.y) + ',' + this.a.toFixed(2) + ',' + this.xv.toFixed(2) + ',' + this.yv.toFixed(2) + ',' + this.av.toFixed(2) + ',' + this.ap + ',' + this.sp + ',' + ((this.state & 1 | this.state & 2) ? 1 : 0) + ',' + this.kills + ',' + this.score + '&' + this.name;
 };
+Player.prototype.returnData_p = function(){ // personal
+  return (~~this.x) + ',' + (~~this.y) + ',' + this.a.toFixed(3) + ',' + this.xv.toFixed(2) + ',' + this.yv.toFixed(2) + ',' + this.av.toFixed(2) + ',' + this.ap + ',' + this.sp + ',' + (Math.min(this.pwr, 1) << 0 | Math.min(this.swr, 1) << 1 | Math.min(this.pwrltcd, 1) << 2) + ',' + this.kills + ',' + this.score + ',' + this.pwam;
+};
+Player.prototype.returnData_ps = function(){ // personal [static] (contains less dynamic player stats )
+  return this.pw + ',' + this.sw + ',' + this.pwtr + ',' + this.swtr + ',' + this.pwcs + ',' + this.pwrlt + ';' + this.name;
+}
 Player.prototype.damage = function(dmg, src){
   if(!dmg) return;
   if(this.sp >= 1){
@@ -263,8 +255,10 @@ Player.prototype.damage = function(dmg, src){
 
 var broadcast = true;
 function update(){
-  let activeProjectiles = [];
+  let activeProjectiles = [], playerList = [];
   for(let i = 0; i < projectiles.length; i ++) activeProjectiles.push(projectiles[i].returnData());
+  for(let i = 0; i < plyrID.length; i ++) playerList.push(plyr[plyrID[i]].returnData());
+  const data_const = `:${activeProjectiles.join(';')}`;
   for(let i = 0; i < plyrID.length; i ++){
     let socketID = plyrID[i];
     let self = plyr[socketID];
@@ -275,11 +269,9 @@ function update(){
     }
     // Checking from index of all tokenids, call from object and update.
     if(broadcast || !config.broadcastInterval){
-      let data = {self: Object.assign(self), plyrs: [], prjctls: activeProjectiles};
-      for(let j = 0; j < plyrID.length; j ++){
-        if(i === j) continue;
-        data.plyrs.push(plyr[plyrID[j]].returnData());
-      }
+      let playerList_local = playerList.slice(0);
+      playerList_local.splice(i, 1);
+      let data = `${self.returnData_p()}:${playerList_local.join(';')}` + data_const;
       io.to(socketID).emit('update', data);
     }
   }
@@ -315,14 +307,15 @@ function broadcastData(){
   broadcast = true;
 }
 function respawnPlayer(socketid){
-  plyr[socketid] = new Player(plyr[socketid].name, Math.round(plyr[socketid].score/4));
+  plyr[socketid] = new Player(socketid, plyr[socketid].name, Math.round(plyr[socketid].score/4));
   console.log('->     respawned! cID: ' + socketid);
 }
-function disconnect(socketid){
+function disconnect(socketid, reason){
+  console.log(' < disconnection! [', reason, '] cID:', socketid);
   setTimeout(function(){
     delete plyr[socketid];
     plyrID.splice(plyrID.indexOf(socketid), 1);
-    console.log(' < disconnection!  cID: ' + socketid);
+    console.log(' << disconnected! [', reason, '] cID:', socketid);
   }, 10000);
 }
 
@@ -340,25 +333,25 @@ io.on('connection', function(socket){
     }*/
     if(plyr[socket.id]){
       if(plyr[socket.id].updateState(data)){
-        console.log("DISCONNECTED!!!")
-        socket.disconnect();
+        /*console.log("DISCONNECTED!!!");
+        socket.disconnect();*/
       }
-    }else{
-      plyr[socket.id] = new Player();
+    }/*else{
+      plyr[socket.id] = new Player(socket.id);
       plyrID.push(socket.id);
-    }
+    }*/
   });
   socket.on('requestConfig', function(name){
     console.log(`=> player [ ${name} ] joined! - cID: ${socket.id}`);
     name.replace(/\n/g, "");
     if(!name || name === "") name = defaultNames[plyrID.length % defaultNames.length];
     plyrID.push(socket.id);
-    plyr[socket.id] = new Player(name.substr(0, 16), 0);
+    plyr[socket.id] = new Player(socket.id, name.substr(0, 16), 0);
     io.to(socket.id).emit('setConfig', config);
   });
-  socket.on('disconnect', function(){
+  socket.on('disconnect', function(reason){
     delete IPs[socket.request.connection.remoteAddress];
-    disconnect(socket.id);
+    disconnect(socket.id, reason);
   });
 });
 
