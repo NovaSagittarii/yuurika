@@ -114,7 +114,7 @@ function draw() {
     push();
     translate(obj[0], obj[1]);
     rotate(obj[2]);
-    fill(200, obj[5]*2);
+    fill(200, obj[5] << 2);
     switch(obj[3]){
       case 0:
         switch(obj[4]){

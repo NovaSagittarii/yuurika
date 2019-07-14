@@ -71,6 +71,7 @@ function updateStatic(data){
   clipsize = SELF[4];
   reloadtime = SELF[5];
   name = data[1];
+  pwr = swr = reload = 0;
 }
 function updateConfig(newConfig){
   config = Object.assign(newConfig);

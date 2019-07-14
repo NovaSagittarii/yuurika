@@ -28,36 +28,36 @@ const stats = {
   ts: Math.PI*0.003,
   wep: {
     pw: {
-      dmg: [30, 15, 8, 6, 88, 11],
+      dmg: [30, 15, 8, 6, 44, 11],
       muV: [-2, 22, 24, 18, 42, 34],
       // muzzle velocity
       rec: [4, 4, 0.7, 8, 5, 1],
       // recoil
       kb: [14, 4, 1, 2, 4, 1],
       // knockback
-      rof: [70, 12, 3, 65, 40, 5],
-      cs: [2, 14, 42, 3, 5, 25],
+      rof: [70, 12, 3, 65, 50, 5],
+      cs: [2, 14, 42, 3, 3, 25],
       //clip size
       rlt: [120, 150, 200, 250, 160, 250],
       //reload time
       range: [600, 480, 550, 300, 1200, 550],
-      pierce: [1, 1, 1, 1, 5, 1],
+      pierce: [1, 1, 1, 1, 3, 1],
       hbs: [28, 24, 18, 16, 22, 24],
       pro: [[2, 10], null, null, null, null, null],
       // propulsion [ float strength , int duration , int homingDuration , int homingSpeed ]
-      expl: [0.4, 0, 0, 0, 0, 0]
+      expl: [0.4, 0, 0, 0, 0.8, 0]
       // explosive
     },
     sw: {
       dmg: [64, 16],
       muV: [-12, 10],
       rec: [-8, 14],
-      kb: [14, 2],
+      kb: [15, 2],
       rof: [200, 400],
-      range: [700, 400],
+      range: [280, 600],
       pierce: [1, 1],
       hbs: [24, 18],
-      pro: [[0.4, 24, 1000, 0.8], null],
+      pro: [[0.4, 24, 250, 1.1], [0.8, 10, 100, 0.8]],
       expl: [1.2, 0.6]
     },
   }
@@ -103,7 +103,7 @@ function Projectile(uID, type, pID, angleOffset){
   }
   this.d = stats.wep[type].range[pID];
   this.f = 0;
-  this.v = stats.wep[type].muV[pID];
+  this.v = Math.max(stats.wep[type].muV[pID], 1);
   this.plyr = uID;
   plyr[uID][type+"r"] = 0;
   //this.hbs = stats.wep[type].hbs[pID];
@@ -221,17 +221,17 @@ Player.prototype.update = function(socketid){
   if(this.y < 0) this.y = 0;
   if(this.x > config.width) this.x = config.width;
   if(this.y > config.height) this.y = config.height;
-  return this.ap < 1 || this.pierce < 1;
+  return this.ap < 1;
 };
 Player.prototype.updateState = function(input){
   //if(isNaN(this.x) || isNaN(this.y) || isNaN(this.a)) return true; // I N V A L I D    M O V E M E N T   :hyperAngery:
   this.state = input.charCodeAt(0);
 };
 Player.prototype.returnData = function(){
-  return (~~this.x) + ',' + (~~this.y) + ',' + this.a.toFixed(2) + ',' + this.xv.toFixed(2) + ',' + this.yv.toFixed(2) + ',' + this.av.toFixed(2) + ',' + this.ap + ',' + this.sp + ',' + ((this.state & 1 | this.state & 2) ? 1 : 0) + ',' + this.kills + ',' + this.score + '&' + this.name;
+  return (~~this.x) + ',' + (~~this.y) + ',' + this.a.toFixed(2) + ',' + this.xv.toFixed(2) + ',' + this.yv.toFixed(2) + ',' + this.av.toFixed(2) + ',' + (~~this.ap) + ',' + (~~this.sp) + ',' + ((this.state & 1 | this.state & 2) ? 1 : 0) + ',' + this.kills + ',' + this.score + '&' + this.name;
 };
 Player.prototype.returnData_p = function(){ // personal
-  return (~~this.x) + ',' + (~~this.y) + ',' + this.a.toFixed(3) + ',' + this.xv.toFixed(2) + ',' + this.yv.toFixed(2) + ',' + this.av.toFixed(2) + ',' + this.ap + ',' + this.sp + ',' + (Math.min(this.pwr, 1) << 0 | Math.min(this.swr, 1) << 1 | Math.min(this.pwrltcd, 1) << 2) + ',' + this.kills + ',' + this.score + ',' + this.pwam;
+  return (~~this.x) + ',' + (~~this.y) + ',' + this.a.toFixed(3) + ',' + this.xv.toFixed(2) + ',' + this.yv.toFixed(2) + ',' + this.av.toFixed(2) + ',' + (~~this.ap) + ',' + (~~this.sp) + ',' + (Math.min(this.pwr, 1) << 0 | Math.min(this.swr, 1) << 1 | Math.min(this.pwrltcd, 1) << 2) + ',' + this.kills + ',' + this.score + ',' + this.pwam;
 };
 Player.prototype.returnData_ps = function(){ // personal [static] (contains less dynamic player stats )
   return this.pw + ',' + this.sw + ',' + this.pwtr + ',' + this.swtr + ',' + this.pwcs + ',' + this.pwrlt + ';' + this.name;
@@ -276,11 +276,14 @@ function update(){
     }
   }
   for(let i = projectiles.length-1; i >= 0; i--){ // reverse parse to ignore added projectiles (explosion indicators)
-    if(projectiles[i].update()){
+    let self = projectiles[i];
+    if(self.update()){
+      if(self.expl){
+        projectiles.push({type: "expl", c: 0, a: self.expl, x: self.x, y: self.y, returnData: Projectile.prototype.returnData, update: function(){ return this.c++;}});
+      }
       projectiles.splice(i, 1);
       continue;
     }
-    let self = projectiles[i];
     if(self.type == 'expl') continue;
     for(let j = 0; j < plyrID.length; j ++){
       if(self.plyr === plyrID[j]) continue;
@@ -293,9 +296,6 @@ function update(){
         if(s.kb){
           that.xv += s.kb * Math.cos(s.a);
           that.yv += s.kb * Math.sin(s.a);
-        }
-        if(self.expl){
-          projectiles.push({type: "expl", c: 0, a: self.expl, x: s.x, y: s.y, returnData: Projectile.prototype.returnData, update: function(){ return this.c++;}});
         }
         if(!(--self.pierce)) break;
       }
