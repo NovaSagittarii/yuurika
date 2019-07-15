@@ -10,8 +10,8 @@ var a = 0;
 var xv = 0;
 var yv = 0;
 var av = 0;
-var ap = 100;
-var sp = 100;
+var ap = 100, apv = 1;
+var sp = 100, spv = 1;
 var pw, sw;
 var pwr = 0;
 var swr = 0;
@@ -30,12 +30,16 @@ var reload;
 var accel = 1;
 var ts = Math.PI * 0.003;
 
-var keys = [], showData, cx, cy, cy_c, cy_a;
+var keys = [], cx, cy, cy_c, cy_a;
+const debug = {
+  showData: false,
+  showFPS: false,
+};
 
 // updates current data to sync client with server
 function update(data){
-  if(showData) console.log(data, data.length);
-  data = data.split(':');
+  if(debug.showData) console.log(data.split('\u001D'), data.length);
+  data = data.split('\u001D');
   const SELF = JSON.parse('[' + data[0] + ']');
   x = SELF[0];
   y = SELF[1];
@@ -43,26 +47,26 @@ function update(data){
   xv = SELF[3];
   yv = SELF[4];
   av = SELF[5];
-  ap -= (ap - SELF[6]) / 7;
-  sp -= (sp - SELF[7]) / 14;
+  ap = SELF[6];
+  sp = SELF[7];
   pwr = (SELF[8] & 1) ? pwr + 1 : 0;
   swr = (SELF[8] & 2) ? swr + 1 : 0;
   reload = (SELF[8] & 4) ? reload + 1 : 0;
   kills = SELF[9];
   score = SELF[10];
   ammo -= (ammo - SELF[11]) / 5;
-  plyrs = data[1].split(';').map(e => {
-    let a = e.split('&');
+  plyrs = data[1].split('\u001F').map(e => {
+    let a = e.split('\u0002');
     let o = JSON.parse('[' + a[0] + ']');
     o.push(a[1]);
     return o;
   });
-  if(!plyrs[0][0]) plyrs = [];
-  projectiles = data[2].split(';').map(e => JSON.parse('[' + e + ']'));
+  if(isNaN(plyrs[0][0])) plyrs = [];
+  projectiles = data[2].split('\u001F').map(e => JSON.parse('[' + e + ']'));
 }
 function updateStatic(data){
   console.log(data, data.length);
-  data = data.split(";");
+  data = data.split("\u001F");
   const SELF = JSON.parse('[' + data[0] + ']');
   pw = SELF[0];
   sw = SELF[1];

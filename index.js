@@ -3,6 +3,7 @@ const app = express();
 const http = require('http');
 const fs = require('fs');
 const defaultNames = "git push origin master disconnect app socket req res https while(true) jeff jason fs express coffee bin socket.io 48fps".split(' ');
+const reservedCharacters = new RegExp('^[\u0000-\u001F]*$', 'g');
 
 app.use(express.static('./public'));
 
@@ -28,17 +29,17 @@ const stats = {
   ts: Math.PI*0.003,
   wep: {
     pw: {
-      dmg: [30, 15, 8, 6, 44, 11],
+      dmg: [35, 15, 8, 6, 44, 11],
       muV: [-2, 22, 24, 18, 42, 34],
       // muzzle velocity
       rec: [4, 4, 0.7, 8, 5, 1],
       // recoil
       kb: [14, 4, 1, 2, 4, 1],
       // knockback
-      rof: [70, 12, 3, 65, 50, 5],
+      rof: [60, 12, 3, 65, 50, 5],
       cs: [2, 14, 42, 3, 3, 25],
       //clip size
-      rlt: [120, 150, 200, 250, 160, 250],
+      rlt: [90, 150, 200, 250, 160, 250],
       //reload time
       range: [600, 480, 550, 300, 1200, 550],
       pierce: [1, 1, 1, 1, 3, 1],
@@ -49,15 +50,15 @@ const stats = {
       // explosive
     },
     sw: {
-      dmg: [64, 16],
+      dmg: [48, 16],
       muV: [-12, 10],
       rec: [-8, 14],
       kb: [15, 2],
-      rof: [200, 400],
-      range: [280, 600],
+      rof: [250, 400],
+      range: [230, 800],
       pierce: [1, 1],
       hbs: [24, 18],
-      pro: [[0.4, 24, 250, 1.1], [0.8, 10, 100, 0.8]],
+      pro: [[0.4, 24, 200, 1], [0.8, 10, 100, 0.8]],
       expl: [1.2, 0.6]
     },
   }
@@ -210,7 +211,8 @@ Player.prototype.update = function(socketid){
         break;
     }
   }
-  if(--this.scd < 0) this.sp = Math.min(this.sp + 0.1, 100);
+  if(--this.scd < 0) this.sp = Math.min(this.sp + 0.125, 100); // + 1/8
+  if(this.scd < 0 && this.sp >= 100) this.ap = Math.min(this.ap + 0.0625, 100); // + 1/16
   this.x += this.xv;
   this.y += this.yv;
   this.a += this.av;
@@ -228,13 +230,13 @@ Player.prototype.updateState = function(input){
   this.state = input.charCodeAt(0);
 };
 Player.prototype.returnData = function(){
-  return (~~this.x) + ',' + (~~this.y) + ',' + this.a.toFixed(2) + ',' + this.xv.toFixed(2) + ',' + this.yv.toFixed(2) + ',' + this.av.toFixed(2) + ',' + (~~this.ap) + ',' + (~~this.sp) + ',' + ((this.state & 1 | this.state & 2) ? 1 : 0) + ',' + this.kills + ',' + this.score + '&' + this.name;
+  return (~~this.x) + ',' + (~~this.y) + ',' + this.a.toFixed(2) + ',' + this.xv.toFixed(2) + ',' + this.yv.toFixed(2) + ',' + this.av.toFixed(2) + ',' + (~~this.ap) + ',' + (~~this.sp) + ',' + ((this.state & 1 | this.state & 2) ? 1 : 0) + ',' + this.kills + ',' + this.score + '\u0002' + this.name;
 };
 Player.prototype.returnData_p = function(){ // personal
   return (~~this.x) + ',' + (~~this.y) + ',' + this.a.toFixed(3) + ',' + this.xv.toFixed(2) + ',' + this.yv.toFixed(2) + ',' + this.av.toFixed(2) + ',' + (~~this.ap) + ',' + (~~this.sp) + ',' + (Math.min(this.pwr, 1) << 0 | Math.min(this.swr, 1) << 1 | Math.min(this.pwrltcd, 1) << 2) + ',' + this.kills + ',' + this.score + ',' + this.pwam;
 };
 Player.prototype.returnData_ps = function(){ // personal [static] (contains less dynamic player stats )
-  return this.pw + ',' + this.sw + ',' + this.pwtr + ',' + this.swtr + ',' + this.pwcs + ',' + this.pwrlt + ';' + this.name;
+  return this.pw + ',' + this.sw + ',' + this.pwtr + ',' + this.swtr + ',' + this.pwcs + ',' + this.pwrlt + '\u001F' + this.name;
 }
 Player.prototype.damage = function(dmg, src){
   if(!dmg) return;
@@ -242,7 +244,7 @@ Player.prototype.damage = function(dmg, src){
     this.scd = 150;
     this.sp = Math.max(0, this.sp - dmg);
   }else{
-    this.scd = 1000;
+    this.scd = 600;
     this.ap -= dmg;
     if(this.dead === null) this.dead = true;
     if(this.ap < 1 && this.dead === false){
@@ -258,7 +260,7 @@ function update(){
   let activeProjectiles = [], playerList = [];
   for(let i = 0; i < projectiles.length; i ++) activeProjectiles.push(projectiles[i].returnData());
   for(let i = 0; i < plyrID.length; i ++) playerList.push(plyr[plyrID[i]].returnData());
-  const data_const = `:${activeProjectiles.join(';')}`;
+  const data_const = `\u001D${activeProjectiles.join('\u001F')}`;
   for(let i = 0; i < plyrID.length; i ++){
     let socketID = plyrID[i];
     let self = plyr[socketID];
@@ -271,7 +273,7 @@ function update(){
     if(broadcast || !config.broadcastInterval){
       let playerList_local = playerList.slice(0);
       playerList_local.splice(i, 1);
-      let data = `${self.returnData_p()}:${playerList_local.join(';')}` + data_const;
+      let data = `${self.returnData_p()}\u001D${playerList_local.join('\u001F')}` + data_const;
       io.to(socketID).emit('update', data);
     }
   }
@@ -290,8 +292,10 @@ function update(){
       let that = plyr[plyrID[j]];
       //if(dist(self.x, self.y, that.x, that.y) < 9){
       if(Math.abs(self.x - that.x) < 24 && Math.abs(self.y - that.y) < 24){
-        plyr[self.plyr].score += self.dmg;
-        if(that.damage(self.dmg, plyr[self.plyr])) plyr[self.plyr].kills ++;
+        if(plyr[self.plyr]){
+          plyr[self.plyr].score += self.dmg;
+          if(that.damage(self.dmg, plyr[self.plyr])) plyr[self.plyr].kills ++;
+        }
         let s = Object.assign(self);
         if(s.kb){
           that.xv += s.kb * Math.cos(s.a);
@@ -308,15 +312,14 @@ function broadcastData(){
 }
 function respawnPlayer(socketid){
   plyr[socketid] = new Player(socketid, plyr[socketid].name, Math.round(plyr[socketid].score/4));
-  console.log('->     respawned! cID: ' + socketid);
+  console.log('->     respawned! cID: ' + socketid + ' // ' + plyr[socketid].name);
 }
 function disconnect(socketid, reason){
   console.log(' < disconnection! [', reason, '] cID:', socketid);
-  setTimeout(function(){
+  // setTimeout(function(){
     delete plyr[socketid];
     plyrID.splice(plyrID.indexOf(socketid), 1);
-    console.log(' << disconnected! [', reason, '] cID:', socketid);
-  }, 10000);
+  // }, 100);
 }
 
 io.on('connection', function(socket){
@@ -343,7 +346,7 @@ io.on('connection', function(socket){
   });
   socket.on('requestConfig', function(name){
     console.log(`=> player [ ${name} ] joined! - cID: ${socket.id}`);
-    name.replace(/\n/g, "");
+    name.replace(reservedCharacters, "");
     if(!name || name === "") name = defaultNames[plyrID.length % defaultNames.length];
     plyrID.push(socket.id);
     plyr[socket.id] = new Player(socket.id, name.substr(0, 16), 0);

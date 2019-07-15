@@ -60,7 +60,7 @@ function draw() {
   //rect(0, 0, 700, 50);
   //fill(0, 0, 0);
   textSize(24);
-  text(`${~~frameRate()}FPS\n ${~~config.targetFrameRate}`, 60, 40);
+  if(debug.showFPS) text(`${frameRate().toFixed(1)}FPS\n${~~config.targetFrameRate}`, 60, 40);
   text(`${plyrs.length ? plyrs.length+1 + " active users" : "You are alone.\nPerhaps you should invite a friend?"}`, width/2, 150);
 
   if(lastRUpdate){
@@ -188,6 +188,8 @@ function draw() {
   noStroke();
   quad(mouseX, mouseY, mouseX, mouseY + 15, mouseX + 5, mouseY + 10, mouseX + 10, mouseY + 10);
 
+  apv -= (apv - ap) / 7;
+  spv -= (spv - sp) / 14;
   //---- GUI ----
   strokeCap(PROJECT);
   textSize(14);
@@ -197,10 +199,13 @@ function draw() {
   fill(255, 255, 255, 50);
   rect(185, height-50, 300, 30, 5);
   fill(255, 0, 0, 100);
-  rect(40+145*ap/100, height-50, 290*ap/100, 15, 5);
+  rect(40+145*apv/100, height-50, 290*apv/100, 15, 5);
   text(Math.round(ap) + "AP", 55, height-75);
+  rect(cx-25+25*ap/100, cy-20, 50*ap/100, 3);
+  fill(100, 100, 255, 100);
+  rect(cx-25+25*sp/100, cy-23, 50*sp/100, 3);
   fill(100, 100, 255, 200);
-  rect(40+145*sp/100, height-50, 290*sp/100, 20, 5);
+  rect(40+145*spv/100, height-50, 290*spv/100, 20, 5);
   text(Math.round(sp) + "SP", 315, height-75);
 
   if(score) score2 -= (score2 - score) / 7;
