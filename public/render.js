@@ -4,7 +4,7 @@ const EXHAUST = 0, M_EXHAUST = 1, EXPLOSION = 2;
 var pDecay = [15, 30, 25];
 var particles = [];
 
-var alignRotation, mouseControls;
+var alignRotation = 0, mouseControls;
 var lastRUpdate = 255, lastMUpdate = 255;
 
 function Particle(x, y, va, a, v, av, type){
@@ -51,7 +51,6 @@ function draw() {
     alignRotation = !alignRotation;
     cy = alignRotation ? cy_a : cy_c;
     lastRUpdate = 255;
-    mouseConfig.ac = -HALF_PI; // funky bug that results in incorrect angle adjustments after rotationg gets toggled
   }
   if(k.o){
     k.o = !k.o;
@@ -184,7 +183,7 @@ function draw() {
   strokeWeight(2+sp/25);*/
   triangle(10, 0, -10, -7, -10, 7);
   resetMatrix();
-  if(k.w || k.s || m[6] || m[7]){
+  if(mouseControls ? (m[6] | m[7]) : (k.w | k.s)){
     xv += Math.cos(a) * accel * (1-1.2*k.s);
     yv += Math.sin(a) * accel * (1-1.2*k.s);
     particles.push(new Particle(x - Math.cos(a) * 15, y - Math.sin(a) * 15, Math.random()*TWO_PI, a + Math.random()*0.5-0.25, -3, 0, EXHAUST));

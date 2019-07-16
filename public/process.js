@@ -35,7 +35,7 @@ const mouseConfig = {
   xb: 15,  // x buffer
   yb: 15,  // y buffer
   ab: 0.15, // angle buffer
-  ac: 0,   // angle calibration
+  ac: -Math.PI/2,   // angle calibration
 };
 const debug = {
   showData: false,
@@ -142,12 +142,13 @@ function mouseMoved() {
     if(m[8]) triangle(cx - 10, cy - 10, cx - 10, cy + 10, cx - 18, cy);
     if(m[9]) triangle(cx + 10, cy - 10, cx + 10, cy + 10, cx + 18, cy);
   }else{
-    let px = cx - xv*2;
-    let py = cy - yv*2;
-    let ta = (Math.atan2(mouseY - py, mouseX - px) + av*1.9 + TWO_PI) % TWO_PI;
+    let px = cx - xv*5.86;
+    let py = cy - yv*5.86;
+    let ta = (Math.atan2(mouseY - py, mouseX - px) + av + TWO_PI) % TWO_PI;
+    let pa = a+mouseConfig.ac+av*5.86;
     m[6] = dist(mouseX, mouseY, px, py) > 100;
     m[8] = m[9] = 0;
-    m[dir(ta, a+mouseConfig.ac) == 1 ? 9 : 8] = cd(ta, a+mouseConfig.ac) >= mouseConfig.ab;
+    m[dir(ta, pa) == 1 ? 9 : 8] = cd(ta, pa) >= av*5.86;
   }
   m[11] = m[10];
   m[10] = String.fromCharCode(m[6] << 0 | m[7] << 1 | m[8] << 2 | m[9] << 3 | m[0] << 4 | m[2] << 5);
