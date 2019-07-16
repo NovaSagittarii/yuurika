@@ -4,8 +4,8 @@ const EXHAUST = 0, M_EXHAUST = 1, EXPLOSION = 2;
 var pDecay = [15, 30, 25];
 var particles = [];
 
-var alignRotation = false;
-var lastRUpdate = 255;
+var alignRotation, mouseControls;
+var lastRUpdate = 255, lastMUpdate = 255;
 
 function Particle(x, y, va, a, v, av, type){
   this.x = x;
@@ -46,11 +46,17 @@ function compare(a,b) {
   return 0;
 }
 function draw() {
-  if(keys.p){
-    keys.p = !keys.p;
+  if(k.p){
+    k.p = !k.p;
     alignRotation = !alignRotation;
     cy = alignRotation ? cy_a : cy_c;
     lastRUpdate = 255;
+    mouseConfig.ac = -HALF_PI; // funky bug that results in incorrect angle adjustments after rotationg gets toggled
+  }
+  if(k.o){
+    k.o = !k.o;
+    mouseControls = !mouseControls;
+    lastMUpdate = 255;
   }
 
   background(0, 0, 0);
@@ -64,10 +70,16 @@ function draw() {
   text(`${plyrs.length ? plyrs.length+1 + " active users" : "You are alone.\nPerhaps you should invite a friend?"}`, width/2, 150);
 
   if(lastRUpdate){
-    lastRUpdate -= 5;
+    lastRUpdate -= 8;
     fill(255, 255, 255, lastRUpdate);
-    text((alignRotation ? "Lock-to-Player" : "Fixed") + " Rotation (P)", width/2, 250);
+    text((alignRotation ? "Lock-to-Player" : "Fixed") + " Rotation (P)", width/2, 195);
   }
+  if(lastMUpdate){
+    lastMUpdate -= 8;
+    fill(255, 255, 255, lastMUpdate);
+    text((mouseControls ? "Mouse" : "Keyboard") + " Controls (O)", width/2, 225);
+  }
+  mouseMoved();
 
   //transformations to center player to center of screen and lock viewing orientation to face upwards
   translate(cx, cy);
@@ -172,12 +184,12 @@ function draw() {
   strokeWeight(2+sp/25);*/
   triangle(10, 0, -10, -7, -10, 7);
   resetMatrix();
-  if(keys.w || keys.s){
-    xv += Math.cos(a) * accel * (1-1.2*keys.s);
-    yv += Math.sin(a) * accel * (1-1.2*keys.s);
+  if(k.w || k.s || m[6] || m[7]){
+    xv += Math.cos(a) * accel * (1-1.2*k.s);
+    yv += Math.sin(a) * accel * (1-1.2*k.s);
     particles.push(new Particle(x - Math.cos(a) * 15, y - Math.sin(a) * 15, Math.random()*TWO_PI, a + Math.random()*0.5-0.25, -3, 0, EXHAUST));
   }
-  if(keys.a || keys.d) av += ts * (1-2*keys.a);
+  if(k.a || k.d) av += ts * (1-2*k.a);
   x += xv;
   y += yv;
   a += av;

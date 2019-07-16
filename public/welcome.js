@@ -5,6 +5,5 @@ function start(){
   joinGame = start = () => {};
 }
 document.addEventListener('keydown', (event) => {
-  const keyName = event.key;
-  if(keyName === 'Enter') start();
+  if(event.key == 'Enter') start();
 });

@@ -215,7 +215,7 @@ Player.prototype.update = function(socketid){
   if(this.scd < 0 && this.sp >= 100) this.ap = Math.min(this.ap + 0.0625, 100); // + 1/16
   this.x += this.xv;
   this.y += this.yv;
-  this.a += this.av;
+  this.a = (this.a + this.av + TWO_PI) % TWO_PI;
   this.xv /= 1.1;
   this.yv /= 1.1;
   this.av /= 1.1;
