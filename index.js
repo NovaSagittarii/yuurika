@@ -178,6 +178,7 @@ function Player(socketid, name, score){
   this.name = name || "";
   this.id = (playerIdCounter++)%128;
   playerNameList[this.id] = this.name;
+  io.emit('updateNameList', (this.id) + '\u001D' + name);
   io.to(socketid).emit('updateS', this.returnData_ps());
   io.to(socketid).emit('name', this.name);
   io.to(socketid).emit('nameList', playerNameList.join('\u001D'));
@@ -454,7 +455,6 @@ io.on('connection', function(socket){
     if(!name || name === "") name = defaultNames[plyrID.length % defaultNames.length];
     plyrID.push(socket.id);
     plyr[socket.id] = new Player(socket.id, name.substr(0, 16), 0);
-    io.emit('updateNameList', (playerIdCounter-1) + '\u001D' + name);
     io.to(socket.id).emit('setConfig', config);
   });
   socket.on('disconnect', function(reason){
