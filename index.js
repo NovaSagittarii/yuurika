@@ -160,7 +160,7 @@ function Player(socketid, name, score){
   this.av = 0; // angular vel
   this.ap = 100; // armour
   this.sp = 100; // shield
-  this.pw = 5; //~~(Math.random() * 6);
+  this.pw = ~~(Math.random() * 6);
   this.sw = ~~(Math.random() * 2);
   this.pwr = 0;
   this.swr = 0;
@@ -454,7 +454,7 @@ io.on('connection', function(socket){
     if(!name || name === "") name = defaultNames[plyrID.length % defaultNames.length];
     plyrID.push(socket.id);
     plyr[socket.id] = new Player(socket.id, name.substr(0, 16), 0);
-    socket.broadcast.emit('updateNameList', playerIdCounter + '\u001D' + name);
+    io.emit('updateNameList', (playerIdCounter-1) + '\u001D' + name);
     io.to(socket.id).emit('setConfig', config);
   });
   socket.on('disconnect', function(reason){
