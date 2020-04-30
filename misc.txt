@@ -22,12 +22,13 @@ player (general)
 
 player (personal)
 /*
-  Total bytes: 18 (20)
-  uint32 uint16 uint16 uint16 uint8 uint8 uint8 uint8 uint8 int8 int8 int8* int8 int8
-  score  x      y      kills  a*    ap    sp    n=3?  pwam  xv*  yv*  av*   null null
+  Total bytes: 20 (20)
+  uint32 uint16 uint16 uint16 uint16 uint8 uint8 uint8 uint8 uint8 int8 int8 int8*
+  score  x      y      kills  a*     a*    ap    sp    n=3?  pwam  xv*  yv*  av*
   xv* yv* ~ 10*N (1 decimal place precision)
   av* ~ 1000*N
   */
+Note: use uint8 a* extra byte is needed without changing block size
 
 player (static personal)
 /*

@@ -59,26 +59,6 @@ function draw() {
   }
 
   background(0, 0, 0);
-  strokeWeight(2);
-  noStroke();
-  fill(255, 255, 255);
-  //rect(0, 0, 700, 50);
-  //fill(0, 0, 0);
-  textSize(24);
-  if(debug.showFPS) text(`${frameRate().toFixed(1)}FPS\n${~~config.targetFrameRate}`, 60, 40);
-  if(debug.transmissionData) text(`${Date.now()-transmissionData[0]}ms\n${transmissionData[1]}B`, 60, 100);
-  text(`${plyrs.length ? plyrs.length+1 + " active users" : "You are alone.\nPerhaps you should invite a friend?"}`, width/2, 150);
-
-  if(lastRUpdate){
-    lastRUpdate -= 8;
-    fill(255, 255, 255, lastRUpdate);
-    text((alignRotation ? "Lock-to-Player" : "Fixed") + " Rotation (P)", width/2, 195);
-  }
-  if(lastMUpdate){
-    lastMUpdate -= 8;
-    fill(255, 255, 255, lastMUpdate);
-    text((mouseControls ? "Mouse" : "Keyboard") + " Controls (O)", width/2, 225);
-  }
   mouseMoved();
 
   //transformations to center player to center of screen and lock viewing orientation to face upwards
@@ -86,7 +66,9 @@ function draw() {
   rotate(3/2*Math.PI - (a - av) * alignRotation);
   translate(-x, -y);
 
-  for(let i = 0; i < particles.length; i ++){
+  image(backgroundImage, 0, 0, 7680, 3872);
+  noStroke();
+  for(let i = particles.length-1; i >= 0; i --){
     if(particles[i].process()) particles.splice(i, 1);
   }
 
@@ -168,12 +150,12 @@ function draw() {
     pop();
   }
 
-  stroke(255, 255, 255, 30);
+  stroke(255, 255, 255, 60);
   noFill(); // draw bounding box
   rect(config.width/2, config.height/2, config.width, config.height);
-  stroke(255, 255, 255, 16);
+  stroke(255, 255, 255, 32);
   rect(config.width/2, config.height/2, config.width+10, config.height+10);
-  stroke(255, 255, 255, 8);
+  stroke(255, 255, 255, 16);
   rect(config.width/2, config.height/2, config.width+20, config.height+20);
   // render player
   translate(x, y);
@@ -184,6 +166,25 @@ function draw() {
   strokeWeight(2+sp/25);*/
   triangle(10, 0, -10, -7, -10, 7);
   resetMatrix();
+  strokeWeight(2);
+  noStroke();
+  fill(255, 255, 255);
+  //rect(0, 0, 700, 50);
+  //fill(0, 0, 0);
+  textSize(24);
+  if(debug.showFPS) text(`${frameRate().toFixed(1)}FPS\n${~~config.targetFrameRate}`, 60, 40);
+  if(debug.transmissionData) text(`${Date.now()-transmissionData[0]}ms\n${transmissionData[1]}B`, 60, 100);
+  text(`${plyrs.length ? plyrs.length+1 + " active users" : "You are alone.\nPerhaps you should invite a friend?"}`, width/2, 150);
+  if(lastRUpdate){
+    lastRUpdate -= 8;
+    fill(255, 255, 255, lastRUpdate);
+    text((alignRotation ? "Lock-to-Player" : "Fixed") + " Rotation (P)", width/2, 195);
+  }
+  if(lastMUpdate){
+    lastMUpdate -= 8;
+    fill(255, 255, 255, lastMUpdate);
+    text((mouseControls ? "Mouse" : "Keyboard") + " Controls (O)", width/2, 225);
+  }
   if(mouseControls ? (m[6] | m[7]) : (k.w | k.s)){
     xv += Math.cos(a) * accel * (1-1.2*k.s);
     yv += Math.sin(a) * accel * (1-1.2*k.s);

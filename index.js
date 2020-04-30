@@ -78,6 +78,7 @@ const playerNameList = [];
 
 const TWO_PI = Math.PI*2;
 const r2bk = 255/TWO_PI;
+const r2bk16 = 65535/TWO_PI;
 const constrain = (x, min, max) => Math.max(Math.min(x, max), min);
 const cd = (x, y) => Math.min(Math.abs(x - y), TWO_PI - Math.abs(x - y)); // circular distance
 const dir = (x, y) => cd(x, y+1) < cd(x, y-1) ? 1 : -1;
@@ -326,17 +327,18 @@ function update(){
       p8i[0] = plyrID.length;
       const p32 = new Uint32Array(ab, 4, 1);
       p32[0] = self.score;
-      const p16 = new Uint16Array(ab, 8, 3);
+      const p16 = new Uint16Array(ab, 8, 4);
       p16[0] = ~~self.x;
       p16[1] = ~~self.y;
       p16[2] = self.kills;
-      const p8 = new Uint8Array(ab, 14, 5);
-      p8[0] = ~~(self.a*r2bk);
+      p16[3] = ~~(self.a*r2bk16);
+      const p8 = new Uint8Array(ab, 16, 5);
+      //p8[0] = ~~(self.a*r2bk);
       p8[1] = self.ap;
       p8[2] = self.sp;
       p8[3] = (Math.min(self.pwr, 1) << 0 | Math.min(self.swr, 1) << 1 | Math.min(self.pwrltcd, 1) << 2);
       p8[4] = self.pwam;
-      const ps8 = new Int8Array(ab, 19, 5);
+      const ps8 = new Int8Array(ab, 21, 3);
       ps8[0] = ~~(self.xv*10);
       ps8[1] = ~~(self.yv*10);
       ps8[2] = ~~(self.av*1000);

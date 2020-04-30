@@ -32,7 +32,7 @@ var ts = Math.PI * 0.003;
 
 var k = [], cx, cy, cy_c, cy_a, m = [];
 var nameList = [], id;
-var transmissionData = [];
+var transmissionData = [], backgroundImage;
 const mouseConfig = {
   xb: 15,  // x buffer
   yb: 15,  // y buffer
@@ -49,7 +49,8 @@ const cd = (x, y) => Math.min(Math.abs(x - y), TWO_PI - Math.abs(x - y)); // cir
 const dir = (x, y) => cd(x, y+1) < cd(x, y-1) ? 1 : -1;
 
 const TWO_PI = Math.PI*2;
-const b2rk =TWO_PI/255; // binary to radians constant
+const b2rk = TWO_PI/255; // binary to radians constant
+const b2rk16 = TWO_PI/65535;
 // updates current data to sync client with server
 function update(data){
   if(debug.showData) console.log(data, data.byteLength);
@@ -57,15 +58,15 @@ function update(data){
   const pc = new Uint8Array(data, 0, 1)[0]; // player count
   const ps = 4+20*pc; // particle start (byte location)
   const p32 = new Uint32Array(data, 4, 1);
-  const p16 = new Uint16Array(data, 8, 3);
-  const p8 = new Uint8Array(data, 14, 5);
-  const ps8 = new Int8Array(data, 19, 5);
+  const p16 = new Uint16Array(data, 8, 4);
+  const p8 = new Uint8Array(data, 16, 5);
+  const ps8 = new Int8Array(data, 21, 3);
 
   score = p32[0];
-  x = p16[0];
-  y = p16[1];
+  x -= (x - p16[0]) / 2;
+  y -= (y - p16[1]) / 2;
   kills = p16[2];
-  a = p8[0]*b2rk;
+  a = p16[3]*b2rk16;
   ap = p8[1];
   sp = p8[2];
   pwr = (p8[3] & 1) ? pwr + 1 : 0;
@@ -76,8 +77,8 @@ function update(data){
   yv = ps8[1]/10;
   av = ps8[2]/1000;
 
+  plyrs = [];
   if(pc>1){
-    plyrs = [];
     for(let i = 24; i < ps; i += 20){
       const u32 = new Uint32Array(data, i, 1);
       const u16 = new Uint16Array(data, i+4, 3);
@@ -85,11 +86,9 @@ function update(data){
       const s8 = new Int8Array(data, i+15, 5);
       plyrs.push([u16[0], u16[1], u8[0]*b2rk, s8[0]/10, s8[1]/10, s8[2]/1000, u8[1], u8[2], u8[3], u16[2], u32[0], u8[4]]);
     }
-  }else{
-    plyrs = [];
   }
+  projectiles = [];
   if(data.byteLength > ps){
-    projectiles = [];
     for(let i = ps; i < data.byteLength; i += 8){
       const u16 = new Uint16Array(data, i, 2);
       const u8 = new Uint8Array(data, i+4, 4);
@@ -112,7 +111,7 @@ function updateStatic(data){
 }
 function setNameList(data){
   nameList = data.split('\u001D');
-  console.log("setNameList", nameList.length, nameList);
+  console.log("setNameList", data.length, nameList);
 }
 function updateNameList(data){
   const d = data.split('\u001D');
@@ -135,6 +134,7 @@ function preload() {
 function setup() {
   var canvas = createCanvas(windowWidth, windowHeight);
   canvas.parent('display');
+  backgroundImage = loadImage('/assets/bkgd.jpg');
   noCursor();
   rectMode(CENTER);
   textAlign(CENTER, CENTER);
