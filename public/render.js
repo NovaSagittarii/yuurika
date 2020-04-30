@@ -57,6 +57,10 @@ function draw() {
     mouseControls = !mouseControls;
     lastMUpdate = 255;
   }
+  if(k.i){
+    k.i = !k.i;
+    debug.showFPS = debug.transmissionData = !debug.showFPS;
+  }
 
   background(0, 0, 0);
   mouseMoved();

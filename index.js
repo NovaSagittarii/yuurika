@@ -29,17 +29,17 @@ const stats = {
   ts: Math.PI*0.003,
   wep: {
     pw: {
-      dmg: [35, 15, 8, 6, 44, 11],
+      dmg: [48, 15, 7, 6, 44, 8],
       muV: [-2, 22, 24, 18, 42, 34],
       // muzzle velocity
       rec: [4, 4, 0.7, 8, 5, 1],
       // recoil
       kb: [14, 4, 1, 2, 4, 1],
       // knockback
-      rof: [60, 12, 3, 65, 50, 5],
-      cs: [2, 14, 42, 3, 3, 25],
+      rof: [35, 12, 3, 65, 50, 24],
+      cs: [2, 14, 42, 3, 3, 30],
       //clip size
-      rlt: [90, 150, 200, 250, 160, 250],
+      rlt: [90, 150, 240, 250, 160, 200],
       //reload time
       range: [600, 480, 550, 300, 1200, 550],
       pierce: [1, 1, 1, 1, 3, 1],
@@ -110,7 +110,7 @@ function Projectile(uID, type, pID, angleOffset){
   this.f = 0;
   this.v = Math.max(stats.wep[type].muV[pID], 1);
   this.plyr = uID;
-  plyr[uID][type+"r"] = 0;
+  //plyr[uID][type+"r"] = 0;
   //this.hbs = stats.wep[type].hbs[pID];
 }
 Projectile.prototype.update = function(){
@@ -148,7 +148,7 @@ function fireBullets(uID, type, pID, angleOffset, repeat){
   }
   plyr[uID].xv -= Math.cos(plyr[uID].a) * stats.wep[type].rec[pID];
   plyr[uID].yv -= Math.sin(plyr[uID].a) * stats.wep[type].rec[pID];
-  plyr[uID][type+"r"] = 0;
+  // plyr[uID][type+"r"] = 0;
 }
 
 function Player(socketid, name, score){
@@ -160,7 +160,7 @@ function Player(socketid, name, score){
   this.av = 0; // angular vel
   this.ap = 100; // armour
   this.sp = 100; // shield
-  this.pw = ~~(Math.random() * 6);
+  this.pw = 5; //~~(Math.random() * 6);
   this.sw = ~~(Math.random() * 2);
   this.pwr = 0;
   this.swr = 0;
@@ -193,6 +193,7 @@ Player.prototype.update = function(socketid){
   ++this.swr;
   if(this.state & 16 && this.pwr > this.pwtr && this.pwam > 0){
     this.pwam --;
+    this.pwr = 0;
     switch(this.pw){
       case U_MISSILE:
         fireBullets(socketid, 'pw', this.pw, 0, 1);
@@ -216,6 +217,18 @@ Player.prototype.update = function(socketid){
     if(this.pwrltcd++ > this.pwrlt){
       this.pwam = this.pwcs;
       this.pwrltcd = 0;
+    }
+  }else{
+    // delayed firing weapons
+    if(this.state & 16 && this.pwam > 0){
+      switch(this.pw){
+        case ASSAULT:
+          if(this.pwr & 2 && this.pwr < 9){
+            this.pwam --;
+            fireBullets(socketid, 'pw', this.pw, 0.1, 1);
+          }
+          break;
+      }
     }
   }
   if(this.state & 32 && this.swr > this.swtr){
