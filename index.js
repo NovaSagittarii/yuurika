@@ -73,8 +73,11 @@ var plyr = {};
 var plyrID = [];
 var projectiles = [];
 var IPs = {};
+var playerIdCounter = 0;
+const playerNameList = [];
 
 const TWO_PI = Math.PI*2;
+const r2bk = 255/TWO_PI;
 const constrain = (x, min, max) => Math.max(Math.min(x, max), min);
 const cd = (x, y) => Math.min(Math.abs(x - y), TWO_PI - Math.abs(x - y)); // circular distance
 const dir = (x, y) => cd(x, y+1) < cd(x, y-1) ? 1 : -1;
@@ -124,10 +127,18 @@ Projectile.prototype.update = function(){
     this.xv = (this.xv + Math.cos(this.a) * this.pro[3]) / 1.08;
     this.yv = (this.yv + Math.sin(this.a) * this.pro[3]) / 1.08;
   }
-  return (this.d < 0 || !this.pierce);
+  return (this.d < 0 || !this.pierce || this.x < 0 || this.y < 0);
 };
 Projectile.prototype.returnData = function(){
-  return ((~~this.x)) + ',' + ((~~this.y)) + ',' + this.a.toFixed(2) + ',' + PARTICLECODE[this.type] + ',' + (this.id||0) + ',' + (this.d||0);
+  // return ((~~this.x)) + ',' + ((~~this.y)) + ',' + this.a.toFixed(2) + ',' + PARTICLECODE[this.type] + ',' + (this.id||0) + ',' + (this.d||0);
+  /*
+  Total bytes: 8
+  uint16 uint16 uint8 uint8 uint8 uint8
+  x      y      a*    PC[t] pID   d*
+  a* ~ angle is converted into 0~255 format.
+  d* ~ gets capped at 255
+  */
+  return [~~this.x, ~~this.y, ~~(this.a*r2bk), PARTICLECODE[this.type], (this.id||0), Math.min(255, this.d||0)];
 };
 
 function fireBullets(uID, type, pID, angleOffset, repeat){
@@ -164,7 +175,11 @@ function Player(socketid, name, score){
   this.score = score || 0;
   this.dead = false;
   this.name = name || "";
+  this.id = (playerIdCounter++)%128;
+  playerNameList[this.id] = this.name;
   io.to(socketid).emit('updateS', this.returnData_ps());
+  io.to(socketid).emit('name', this.name);
+  io.to(socketid).emit('nameList', playerNameList.join('\u001D'));
 }
 Player.prototype.update = function(socketid){
   if(this.state & 1 | this.state & 2){
@@ -229,14 +244,46 @@ Player.prototype.updateState = function(input){
   //if(isNaN(this.x) || isNaN(this.y) || isNaN(this.a)) return true; // I N V A L I D    M O V E M E N T   :hyperAngery:
   this.state = input.charCodeAt(0);
 };
-Player.prototype.returnData = function(){
-  return (~~this.x) + ',' + (~~this.y) + ',' + this.a.toFixed(2) + ',' + this.xv.toFixed(2) + ',' + this.yv.toFixed(2) + ',' + this.av.toFixed(2) + ',' + (~~this.ap) + ',' + (~~this.sp) + ',' + ((this.state & 1 | this.state & 2) ? 1 : 0) + ',' + this.kills + ',' + this.score + '\u0002' + this.name;
+Player.prototype.returnData = function(){ // general form (Nonpersonal)
+  // return (~~this.x) + ',' + (~~this.y) + ',' + this.a.toFixed(2) + ',' + this.xv.toFixed(2) + ',' + this.yv.toFixed(2) + ',' + this.av.toFixed(2) + ',' + (~~this.ap) + ',' + (~~this.sp) + ',' + ((this.state & 1 | this.state & 2) ? 1 : 0) + ',' + this.kills + ',' + this.score + '\u0002' + this.name;
+  /*
+  Total bytes: 18
+  uint32 uint16 uint16 uint16 uint8 uint8 uint8 uint8 uint8 int8 int8 int8*
+  score  x      y      kills  a*    ap    sp    aliv* pID   xv*  yv*  av*
+  xv* yv* ~ 10*N (1 decimal place precision)
+  av* ~ 1000*N
+  aliv* ~ (this.state & 1 | this.state & 2) ? 1 : 0)
+  */
+  return [this.score, ~~this.x, ~~this.y, this.kills, ~~(this.a*r2bk), this.ap, this.sp, (this.state & 1 | this.state & 2) ? 1 : 0, this.id, ~~(this.xv*10), ~~(this.yv*10), ~~(this.av*1000)];
 };
 Player.prototype.returnData_p = function(){ // personal
-  return (~~this.x) + ',' + (~~this.y) + ',' + this.a.toFixed(3) + ',' + this.xv.toFixed(2) + ',' + this.yv.toFixed(2) + ',' + this.av.toFixed(2) + ',' + (~~this.ap) + ',' + (~~this.sp) + ',' + (Math.min(this.pwr, 1) << 0 | Math.min(this.swr, 1) << 1 | Math.min(this.pwrltcd, 1) << 2) + ',' + this.kills + ',' + this.score + ',' + this.pwam;
+  // return (~~this.x) + ',' + (~~this.y) + ',' + this.a.toFixed(3) + ',' + this.xv.toFixed(2) + ',' + this.yv.toFixed(2) + ',' + this.av.toFixed(2) + ',' + (~~this.ap) + ',' + (~~this.sp) + ',' + (Math.min(this.pwr, 1) << 0 | Math.min(this.swr, 1) << 1 | Math.min(this.pwrltcd, 1) << 2) + ',' + this.kills + ',' + this.score + ',' + this.pwam;
+  /*
+  Total bytes: 18
+  uint32 uint16 uint16 uint16 uint8 uint8 uint8 uint8 uint8 int8 int8 int8*
+  score  x      y      kills  a*    ap    sp    n=3?  pwam  xv*  yv*  av*
+  xv* yv* ~ 10*N (1 decimal place precision)
+  av* ~ 1000*N
+  */
+  return [this.score, ~~this.x, ~~this.y, this.kills, ~~(this.a*r2bk), this.ap, this.sp, (Math.min(this.pwr, 1) << 0 | Math.min(this.swr, 1) << 1 | Math.min(this.pwrltcd, 1) << 2), this.pwam, ~~(this.xv*10), ~~(this.yv*10), ~~(this.av*1000)];
 };
 Player.prototype.returnData_ps = function(){ // personal [static] (contains less dynamic player stats )
-  return this.pw + ',' + this.sw + ',' + this.pwtr + ',' + this.swtr + ',' + this.pwcs + ',' + this.pwrlt + '\u001F' + this.name;
+  // return this.id + ',' + this.pw + ',' + this.sw + ',' + this.pwtr + ',' + this.swtr + ',' + this.pwcs + ',' + this.pwrlt + '\u001F' + this.name;
+  /*
+  Total bytes: 9
+  uint16 uint16 uint8 uint8 uint8 uint8 uint8
+  pwrlt  swtr   id    pw    sw    pwtr  pwcs
+  */
+  const a8 = new Uint8Array(9);
+  a8[4] = this.id;
+  a8[5] = this.pw;
+  a8[6] = this.sw;
+  a8[7] = this.pwtr;
+  a8[8] = this.pwcs;
+  const a16 = new Uint16Array(a8.buffer, 0, 2);
+  a16[0] = this.pwrlt;
+  a16[1] = this.swtr;
+  return a8.buffer;
 }
 Player.prototype.damage = function(dmg, src){
   if(!dmg) return;
@@ -258,9 +305,9 @@ Player.prototype.damage = function(dmg, src){
 var broadcast = true;
 function update(){
   let activeProjectiles = [], playerList = [];
-  for(let i = 0; i < projectiles.length; i ++) activeProjectiles.push(projectiles[i].returnData());
-  for(let i = 0; i < plyrID.length; i ++) playerList.push(plyr[plyrID[i]].returnData());
-  const data_const = `\u001D${activeProjectiles.join('\u001F')}`;
+  //for(let i = 0; i < projectiles.length; i ++) activeProjectiles.push(projectiles[i].returnData());
+  //for(let i = 0; i < plyrID.length; i ++) playerList.push(plyr[plyrID[i]].returnData());
+  // const data_const = `\u001D${activeProjectiles.join('\u001F')}`;
   for(let i = 0; i < plyrID.length; i ++){
     let socketID = plyrID[i];
     let self = plyr[socketID];
@@ -271,10 +318,49 @@ function update(){
     }
     // Checking from index of all tokenids, call from object and update.
     if(broadcast || !config.broadcastInterval){
-      let playerList_local = playerList.slice(0);
+      let playerList_local = plyrID.slice(0);
       playerList_local.splice(i, 1);
-      let data = `${self.returnData_p()}\u001D${playerList_local.join('\u001F')}` + data_const;
-      io.to(socketID).emit('update', data);
+      //let data = `${self.returnData_p()}\u001D${playerList_local.join('\u001F')}` + data_const;
+      const ab = new ArrayBuffer(4 + 20*plyrID.length + 8*projectiles.length);
+      const p8i = new Uint8Array(ab, 0, 1);
+      p8i[0] = plyrID.length;
+      const p32 = new Uint32Array(ab, 4, 1);
+      p32[0] = self.score;
+      const p16 = new Uint16Array(ab, 8, 3);
+      p16[0] = ~~self.x;
+      p16[1] = ~~self.y;
+      p16[2] = self.kills;
+      const p8 = new Uint8Array(ab, 14, 5);
+      p8[0] = ~~(self.a*r2bk);
+      p8[1] = self.ap;
+      p8[2] = self.sp;
+      p8[3] = (Math.min(self.pwr, 1) << 0 | Math.min(self.swr, 1) << 1 | Math.min(self.pwrltcd, 1) << 2);
+      p8[4] = self.pwam;
+      const ps8 = new Int8Array(ab, 19, 5);
+      ps8[0] = ~~(self.xv*10);
+      ps8[1] = ~~(self.yv*10);
+      ps8[2] = ~~(self.av*1000);
+
+      for(let i = 0; i < playerList_local.length; i ++){
+        const d = plyr[playerList_local[i]].returnData();
+        const a32 = new Uint32Array(ab, 24+i*20, 1);
+        a32[0] = d[0];
+        const a16 = new Uint16Array(ab, 28+i*20, 3);
+        for(let x = 0; x < 3; x ++) a16[x] = d[1+x];
+        const a8 = new Uint8Array(ab, 34+i*20, 5);
+        for(let x = 0; x < 5; x ++) a8[x] = d[4+x];
+        const as8 = new Int8Array(ab, 39+i*20, 3);
+        for(let x = 0; x < 3; x ++) as8[x] = d[9+x];
+      }
+      const projectile_start = 4 + 20*plyrID.length;
+      for(let i = 0; i < projectiles.length; i ++){
+        const d = projectiles[i].returnData();
+        const a16 = new Uint16Array(ab, projectile_start+i*8, 2);
+        for(let x = 0; x < 2; x ++) a16[x] = d[x];
+        const a8 = new Uint8Array(ab, projectile_start+4+i*8, 4);
+        for(let x = 0; x < 4; x ++) a8[x] = d[x+2];
+      }
+      io.to(socketID).emit('update', ab);
     }
   }
   for(let i = projectiles.length-1; i >= 0; i--){ // reverse parse to ignore added projectiles (explosion indicators)
@@ -327,6 +413,9 @@ io.on('connection', function(socket){
   console.log(' > new connection < ' + address + ' cID: ' + socket.id);
   if(!IPs[address]) IPs[address] = socket.id;
 
+  const ba = new ArrayBuffer(4);
+  socket.emit('buffer', ba);
+
   socket.on('input', function(data){
     /*if(IPs[address] !== socket.id){
       io.sockets.connected[IPs[address]].disconnect();
@@ -350,6 +439,7 @@ io.on('connection', function(socket){
     if(!name || name === "") name = defaultNames[plyrID.length % defaultNames.length];
     plyrID.push(socket.id);
     plyr[socket.id] = new Player(socket.id, name.substr(0, 16), 0);
+    socket.broadcast.emit('updateNameList', playerIdCounter + '\u001D' + name);
     io.to(socket.id).emit('setConfig', config);
   });
   socket.on('disconnect', function(reason){

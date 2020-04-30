@@ -66,6 +66,7 @@ function draw() {
   //fill(0, 0, 0);
   textSize(24);
   if(debug.showFPS) text(`${frameRate().toFixed(1)}FPS\n${~~config.targetFrameRate}`, 60, 40);
+  if(debug.transmissionData) text(`${Date.now()-transmissionData[0]}ms\n${transmissionData[1]}B`, 60, 100);
   text(`${plyrs.length ? plyrs.length+1 + " active users" : "You are alone.\nPerhaps you should invite a friend?"}`, width/2, 150);
 
   if(lastRUpdate){
@@ -104,7 +105,7 @@ function draw() {
     triangle(10, 0, -10, -7, -10, 7);
 
     rotate(HALF_PI - plyr[2] + a*alignRotation);
-    text(plyr[11], 0, 20);
+    text(nameList[plyr[11]], 0, 20);
     fill(255, 0, 0, 100);
     rect(-25+25*plyr[6]/100, -20, 50*plyr[6]/100, 3);
     fill(100, 100, 255, 100);
@@ -112,7 +113,7 @@ function draw() {
 
     pop();
     if(plyr[8]) particles.push(new Particle(plyr[0] - Math.cos(plyr[2])*15, plyr[1] - Math.sin(plyr[2])*15, Math.random()*TWO_PI, plyr[2] + Math.random()*0.5-0.25, -3, 0, EXHAUST));
-    toSort.push({val: plyr[10], name: plyr[11]});
+    toSort.push({val: plyr[10], name: nameList[plyr[11]]});
   }
   toSort.push({val: score, name: name}); // add player to leaderboard
   toSort.sort(compare).reverse(); // sort leaderboard

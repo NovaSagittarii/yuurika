@@ -1,0 +1,42 @@
+byte calculation
+`uint16 uint16 uint8 uint8 uint8 uint8 uint8`.split(' ').map(v => v.includes('32') ? 4 : (v.includes('16') ? 2 : (v.includes('8') ? 1 : 0))).reduce((a,b)=>a+b)
+
+projectile
+/*
+  Total bytes: 8
+  uint16 uint16 uint8 uint8 uint8 uint8
+  x      y      a*    PC[t] pID   d*
+  a* ~ angle is converted into 0~255 format.
+  d* ~ gets capped at 255
+  */
+
+player (general)
+/*
+  Total bytes: 18 (20)
+  uint32 uint16 uint16 uint16 uint8 uint8 uint8 uint8 uint8 int8 int8 int8* int8 int8
+  score  x      y      kills  a*    ap    sp    aliv* pID   xv*  yv*  av*   null null
+  xv* yv* ~ 10*N (1 decimal place precision)
+  av* ~ 1000*N
+  aliv* ~ (this.state & 1 | this.state & 2) ? 1 : 0)
+  */
+
+player (personal)
+/*
+  Total bytes: 18 (20)
+  uint32 uint16 uint16 uint16 uint8 uint8 uint8 uint8 uint8 int8 int8 int8* int8 int8
+  score  x      y      kills  a*    ap    sp    n=3?  pwam  xv*  yv*  av*   null null
+  xv* yv* ~ 10*N (1 decimal place precision)
+  av* ~ 1000*N
+  */
+
+player (static personal)
+/*
+  Total bytes: 9
+  uint16 uint16 uint8 uint8 uint8 uint8 uint8
+  pwrlt  swtr   id    pw    sw    pwtr  pwcs
+  */
+
+Packet (update) protocol
+       uint32      | [player (personal)] | [player]      | [projectile]
+       playercount | player data         | other players | projectiles
+bytes: 4           | 20                  | 20 each       | 8 each
