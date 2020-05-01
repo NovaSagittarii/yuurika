@@ -84,6 +84,7 @@ function GameRoom(type){
   this.playerIdCounter = 0;
   this.playerNameList = [];
   this.socketRoom = String.fromCharCode(roomCount++);
+  if(type === TDM) this.teams = [[], []];
   this.broadcast = true;
   this.id = roomCount-32;
   this.resume();
@@ -170,7 +171,7 @@ GameRoom.prototype.update = function(){
     for(let j = 0; j < this.plyrID.length; j ++){
       if(self.plyr.socket.id === this.plyrID[j]) continue;
       let that = this.plyr[this.plyrID[j]];
-      if(this.type == TBD && (self.plyr.id & that.id & 128)) continue; // same affiliation value means no friendly fire
+      if(this.type === TDM && (self.plyr.id & 128) == (that.id & 128)) continue; // same affiliation value means no friendly fire
       //if(dist(self.x, self.y, that.x, that.y) < 9){
       if(Math.abs(self.x - that.x) < 24 && Math.abs(self.y - that.y) < 24){
         if(self.plyr){
@@ -190,7 +191,10 @@ GameRoom.prototype.update = function(){
 };
 GameRoom.prototype.disconnect = function(socketid, reason){
   console.log(` < disconnection! [ ${reason} ] cID: ${socketid}`);
-  if(this.plyr[socketid]) this.playerNameList[this.plyr[socketid].id] = "";
+  if(this.plyr[socketid]){
+    this.playerNameList[this.plyr[socketid].id] = "";
+    if(this.type === TDM) this.teams[!!(this.plyr[socketid].id&128)|0].splice(this.plyrID.indexOf(socketid), 1);
+  }
   delete this.plyr[socketid];
   this.plyrID.splice(this.plyrID.indexOf(socketid), 1);
 };
@@ -209,13 +213,15 @@ function Projectile(source, type, pID, angleOffset){
   this.expl = stats.wep[type].expl[pID];
   if(stats.wep[type].pro[pID]){
     this.pro = stats.wep[type].pro[pID];
-    if(this.pro[2] && source.room.plyrID.length > 1){
+    let seekingList = source.room.type === TDM ? source.room.teams[!(source.id&128)|0] : source.room.plyrID;
+    if(this.pro[2] && seekingList.length){
       let dists = [];
-      for(let i = 0; i < source.room.plyrID.length; i ++){
-        let p = source.room.plyr[source.room.plyrID[i]];
-        dists.push({P: source.room.plyrID[i], d: Math.abs((p.x+p.xv*3) - this.x) + Math.abs((p.y+p.yv*3) - this.y)});
+      for(let i = 0; i < seekingList.length; i ++){
+        let p = source.room.plyr[seekingList[i]];
+        if(source.id == p.id) continue;
+        dists.push({P: seekingList[i], d: Math.abs((p.x+p.xv*3) - this.x) + Math.abs((p.y+p.yv*3) - this.y)});
       }
-      this.target = source.room.plyr[dists.sort((a, b) => a.d - b.d)[1].P];
+      this.target = source.room.plyr[dists.sort((a, b) => a.d - b.d)[0].P];
     }
   }
   this.d = stats.wep[type].range[pID];
@@ -245,6 +251,7 @@ Projectile.prototype.returnData = function(){
 };
 function ExplosionMarker(a, x, y){
   this.type = "expl";
+  this.c = 0;
   this.a = a;
   this.x = x;
   this.y = y;
@@ -279,11 +286,15 @@ function Player(gameroom, socket, name, score){
   this.dead = false;
   this.name = name || "";
   this.id = (gameroom.playerIdCounter++)%128;
-  if(gameroom.type == TDM) this.id = this.id | (Math.random()>0.5 ? 128 : 0); // 128 is team affiliation
+  if(gameroom.type === TDM){
+    this.id = this.id | (Math.random()>0.5 ? 128 : 0); // 128 is team affiliation
+    gameroom.teams[!!(this.id&128)|0].push(socket.id);
+  }
   this.socket = socket;
   this.room = gameroom;
   gameroom.playerNameList[this.id] = this.name;
   io.to(gameroom.socketRoom).emit('updateNameList', (this.id) + '\u001D' + name);
+  socket.join(gameroom.socketRoom);
   socket.emit('updateS', this.returnData_ps());
   socket.emit('name', this.name);
   socket.compress(true).emit('nameList', gameroom.playerNameList.join('\u001D'));
@@ -365,6 +376,7 @@ Player.prototype.update = function(){
   if(this.y < 0) this.y = 0;
   if(this.x > config.width) this.x = config.width;
   if(this.y > config.height) this.y = config.height;
+  if(this.ap < 1) this.ap = 0;
   return this.ap < 1;
 };
 Player.prototype.updateState = function(input){
@@ -429,7 +441,7 @@ Player.prototype.respawn = function(){
   this.kills = 0;
   this.score = Math.round(this.score*.5)
   this.dead = false;
-  socket.emit('updateS', this.returnData_ps());
+  this.socket.emit('updateS', this.returnData_ps());
 };
 
 activeRooms.push(new GameRoom(TDM));
