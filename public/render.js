@@ -88,6 +88,7 @@ function draw() {
     rotate(plyr[2]);
     /*stroke(100, 255, 255, plyr.sp);
     strokeWeight(2+plyr.sp/25);*/
+    if(config.t === 1) fill(127+(plyr[11]&128), 150, 127+(~plyr[11]&128));
     triangle(10, 0, -10, -7, -10, 7);
 
     rotate(HALF_PI - plyr[2] + a*alignRotation);
@@ -168,6 +169,7 @@ function draw() {
   fill(255, 255, 255);
   /*stroke(100, 255, 255, sp);
   strokeWeight(2+sp/25);*/
+  if(config.t === 1) fill(127+(id&128), 150, 127+(~id&128));
   triangle(10, 0, -10, -7, -10, 7);
   resetMatrix();
   strokeWeight(2);
@@ -211,6 +213,7 @@ function draw() {
   strokeCap(PROJECT);
   textSize(14);
   fill(255);
+  if(config.t === 1) fill(127+(id&128), 150, 127+(~id&128));
   text(name, cx, cy+20);
   textSize(18);
   fill(255, 255, 255, 50);

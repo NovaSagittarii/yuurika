@@ -190,7 +190,7 @@ GameRoom.prototype.update = function(){
 };
 GameRoom.prototype.disconnect = function(socketid, reason){
   console.log(` < disconnection! [ ${reason} ] cID: ${socketid}`);
-  this.playerNameList[this.plyr[socketid].id] = "";
+  if(this.plyr[socketid]) this.playerNameList[this.plyr[socketid].id] = "";
   delete this.plyr[socketid];
   this.plyrID.splice(this.plyrID.indexOf(socketid), 1);
 };
