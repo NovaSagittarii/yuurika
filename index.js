@@ -23,7 +23,7 @@ const PARTICLECODE = {
 }
 const stats = {
   accel: 1,
-  ts: Math.PI*0.003,
+  ts: Math.PI*0.006,
   wep: {
     pw: {
       dmg: [48, 15, 7, 6, 44, 8],
@@ -214,7 +214,7 @@ function Projectile(source, type, pID, angleOffset){
   if(stats.wep[type].pro[pID]){
     this.pro = stats.wep[type].pro[pID];
     let seekingList = source.room.type === TDM ? source.room.teams[!(source.id&128)|0] : source.room.plyrID;
-    if(this.pro[2] && seekingList.length){
+    if(this.pro[2] && seekingList.length > (source.room.type === TDM ? 0 : 1)){
       let dists = [];
       for(let i = 0; i < seekingList.length; i ++){
         let p = source.room.plyr[seekingList[i]];
@@ -286,7 +286,7 @@ function Player(gameroom, socket, name, score){
   this.name = name || "";
   this.id = (gameroom.playerIdCounter++)%128;
   if(gameroom.type === TDM){
-    this.id = this.id | (Math.random()>0.5 ? 128 : 0); // 128 is team affiliation
+    this.id = this.id | ((gameroom.teams[0].length == gameroom.teams[1].length ? Math.random()>0.5 : (gameroom.teams[0].length > gameroom.teams[1].length)) ? 128 : 0); // 128 is team affiliation
     gameroom.teams[!!(this.id&128)|0].push(socket.id);
   }
   this.socket = socket;
