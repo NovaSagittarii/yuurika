@@ -33,15 +33,15 @@ const stats = {
       // recoil
       kb: [14, 4, 1, 2, 4, 1],
       // knockback
-      rof: [35, 12, 3, 65, 50, 24],
-      cs: [2, 14, 42, 3, 3, 30],
+      rof: [1, 1, 1, 1, 1, 1],
+      cs: [64, 64, 64, 64, 64, 64],
       //clip size
-      rlt: [90, 150, 240, 250, 160, 200],
+      rlt: [15, 15, 15, 15, 15, 15],
       //reload time
-      range: [600, 480, 550, 300, 1200, 550],
+      range: [1200, 1200, 1200, 1200, 1200, 1200],
       pierce: [1, 1, 1, 1, 3, 1],
       hbs: [28, 24, 18, 16, 22, 24],
-      pro: [[2, 10], null, null, null, null, null],
+      pro: [[2, 20, 5, 2], null, null, null, null, null],
       // propulsion [ float strength , int duration , int homingDuration , int homingSpeed ]
       expl: [0.4, 0, 0, 0, 0.8, 0]
       // explosive
@@ -51,11 +51,11 @@ const stats = {
       muV: [-12, 10],
       rec: [-8, 14],
       kb: [15, 2],
-      rof: [250, 400],
+      rof: [80, 40],
       range: [230, 800],
       pierce: [1, 1],
       hbs: [24, 18],
-      pro: [[0.4, 24, 200, 1], [0.8, 10, 100, 0.8]],
+      pro: [[0.4, 24, 20, 1], [0.8, 10, 10, 0.8]],
       expl: [1.2, 0.6]
     },
   }
@@ -319,20 +319,20 @@ Player.prototype.update = function(){
     this.pwr = 0;
     switch(this.pw){
       case U_MISSILE:
-        this.fireBullets('pw', this.pw, 0, 1);
+        this.fireBullets('pw', this.pw, 0.1, 3);
         break;
       case TWIN:
-        this.fireBullets('pw', this.pw, 0, 1);
+        this.fireBullets('pw', this.pw, 0.2, 5);
         break;
       case GATLING:
-        this.fireBullets('pw', this.pw, 0.4, 1);
+        this.fireBullets('pw', this.pw, Math.PI, 50);
         break;
       case SHOTGUN:
-        this.fireBullets('pw', this.pw, 0.6, 12);
+        this.fireBullets('pw', this.pw, 0.6, 36);
       break;
       case RAIL:
       case ASSAULT:
-        this.fireBullets('pw', this.pw, 0, 1);
+        this.fireBullets('pw', this.pw, 0.1, 3);
         break;
     }
   }
@@ -348,7 +348,7 @@ Player.prototype.update = function(){
         case ASSAULT:
           if(this.pwr & 2 && this.pwr < 9){
             this.pwam --;
-            this.fireBullets('pw', this.pw, 0.1, 1);
+            this.fireBullets('pw', this.pw, 0.1, 3);
           }
           break;
       }
@@ -359,7 +359,7 @@ Player.prototype.update = function(){
     switch(this.sw){
       case MISSILE:
       case BURST:
-        this.fireBullets('sw', this.sw, 0.4 * this.sw, this.sw ? 7 : 1);
+        this.fireBullets('sw', this.sw, 0.4, this.sw ? 21 : 5);
         break;
     }
   }
@@ -443,7 +443,7 @@ Player.prototype.respawn = function(){
   this.socket.emit('updateS', this.returnData_ps());
 };
 
-activeRooms.push(new GameRoom(TDM));
+activeRooms.push(new GameRoom(FFA));
 
 io.on('connection', function(socket){
   var address = socket.handshake.address;
