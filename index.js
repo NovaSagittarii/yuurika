@@ -218,9 +218,13 @@ function Projectile(source, type, pID, angleOffset){
       let dists = [];
       for(let i = 0; i < seekingList.length; i ++){
         let p = source.room.plyr[seekingList[i]];
-        dists.push({P: seekingList[i], d: Math.abs((p.x+p.xv*3) - this.x) + Math.abs((p.y+p.yv*3) - this.y)});
+        if (p) { // maybe someone disconnects before lock-on can work
+          dists.push({P: seekingList[i], d: Math.abs((p.x+p.xv*3) - this.x) + Math.abs((p.y+p.yv*3) - this.y)});
+        }
       }
-      this.target = source.room.plyr[dists.sort((a, b) => a.d - b.d)[source.room.type === TDM ? 0 : 1].P];
+      if (dists.length) {
+        this.target = source.room.plyr[dists.sort((a, b) => a.d - b.d)[source.room.type === TDM ? 0 : 1].P];
+      }
     }
   }
   this.d = stats.wep[type].range[pID];
